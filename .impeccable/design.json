@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-21T00:00:00Z",
+  "title": "Design System: Showdown Helper",
+  "extensions": {
+    "colorMeta": {
+      "cobalt-ink": { "role": "primary", "displayName": "Cobalt Ink", "canonical": "#0047ab", "tonalRamp": ["#001a40", "#002a66", "#00378a", "#0047ab", "#3a6fc4", "#6c97d8", "#a3bfe9", "#dbe6f6"] },
+      "cobalt-ink-deep": { "role": "primary", "displayName": "Cobalt Ink Deep", "canonical": "#00348a", "tonalRamp": ["#001533", "#00235c", "#002d78", "#00348a", "#2f5aa8", "#6283c0", "#9db4dc", "#d7e0f1"] },
+      "cobalt-pen-light": { "role": "primary", "displayName": "Cobalt Pen Light", "canonical": "#8db1ff", "tonalRamp": ["#1d3e80", "#2f5ab3", "#4a76d9", "#6d94f2", "#8db1ff", "#aac4ff", "#c7d8ff", "#e6eeff"] },
+      "desk-sand": { "role": "neutral", "displayName": "Desk Sand", "canonical": "#ece2cc", "tonalRamp": ["#4a4333", "#6e6550", "#928874", "#b5ab96", "#d0c6af", "#ece2cc", "#f3ecdb", "#faf6ec"] },
+      "band-sand": { "role": "neutral", "displayName": "Band Sand", "canonical": "#e4d7b8", "tonalRamp": ["#453d28", "#695e41", "#8d7f5c", "#b0a279", "#cbbd98", "#e4d7b8", "#efe6d0", "#f8f3e6"] },
+      "band-soft-sand": { "role": "neutral", "displayName": "Band Soft Sand", "canonical": "#f3ecdb", "tonalRamp": ["#4d4637", "#736b57", "#999078", "#bcb39b", "#d9d0b8", "#ebe3cf", "#f3ecdb", "#fbf8ef"] },
+      "sheet-white": { "role": "neutral", "displayName": "Sheet White", "canonical": "#ffffff", "tonalRamp": ["#3a3a3a", "#5c5c5c", "#808080", "#a6a6a6", "#c8c8c8", "#e3e3e3", "#f3f3f3", "#ffffff"] },
+      "print-navy": { "role": "neutral", "displayName": "Print Navy", "canonical": "#17203a", "tonalRamp": ["#080b14", "#10162a", "#17203a", "#2a3556", "#444f73", "#6a7594", "#9aa3bb", "#d0d4e0"] },
+      "print-navy-secondary": { "role": "neutral", "displayName": "Print Navy Secondary", "canonical": "#4a5470", "tonalRamp": ["#171b28", "#262c40", "#363e58", "#4a5470", "#68718b", "#8a92a8", "#b2b8c8", "#dcdfe7"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The h1 only; heavy, tight, balanced." },
+      "headline": { "displayName": "Headline", "purpose": "Section h2 and the scaled-up closing h2." },
+      "title": { "displayName": "Title", "purpose": "h3 in guide rows and install steps." },
+      "body": { "displayName": "Body", "purpose": "Running copy, max 62ch." },
+      "label": { "displayName": "Field Label", "purpose": "Condensed caps naming a filled-in entry." },
+      "entry-mono": { "displayName": "Entry Mono", "purpose": "Commands and addresses inside entry fields." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(.16, 1, .3, 1)", "purpose": "Expo-out for rise, write, draw-rule, link underline and arrow shift." },
+      { "name": "pen", "value": "cubic-bezier(.45, 0, .2, 1)", "purpose": "Stroke-dashoffset draw of rings and ticks, 0.9s after 500ms." },
+      { "name": "rise", "value": "opacity+translateY(14px) .7s, 70ms stagger", "purpose": "Content enters once on scroll." },
+      { "name": "write", "value": "clip-path inset left to right .9s, 90ms stagger", "purpose": "Cobalt entries are written in." },
+      { "name": "draw-rule", "value": "scaleX 0 to 1 from left, 1s", "purpose": "Section rule draws across." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "420px" },
+      { "name": "phone", "value": "520px" },
+      { "name": "small", "value": "640px" },
+      { "name": "full-bleed", "value": "760px" },
+      { "name": "single-column", "value": "860px" },
+      { "name": "hero-stack", "value": "900px" },
+      { "name": "sheet", "value": "1240px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action: a filled cobalt box with an arrow.",
+      "html": "<a class=\"ds-btn\" href=\"#\">Get the code on GitHub <svg viewBox=\"0 0 18 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 9h13M10 4l5 5-5 5\"/></svg></a>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 12px; height: 54px; padding: 0 24px; background: #0047ab; color: #fff; font: 600 17px/1 Archivo, 'Segoe UI', system-ui, sans-serif; text-decoration: none; border: 2px solid #0047ab; border-radius: 2px; transition: background-color .2s ease, transform .15s ease; } .ds-btn svg { width: 18px; height: 18px; transition: transform .3s cubic-bezier(.16,1,.3,1); } .ds-btn:hover { background: #00348a; border-color: #00348a; } .ds-btn:hover svg { transform: translateX(4px); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid #0047ab; outline-offset: 3px; }"
+    },
+    {
+      "name": "Paper Button",
+      "kind": "button",
+      "refersTo": "button-paper",
+      "description": "White button for use on the cobalt closing field.",
+      "html": "<div class=\"ds-field\"><a class=\"ds-btn-paper\" href=\"#\">Get the code on GitHub</a></div>",
+      "css": ".ds-field { background: #0047ab; padding: 24px; } .ds-btn-paper { display: inline-flex; align-items: center; height: 54px; padding: 0 24px; background: #fff; color: #0047ab; font: 600 17px/1 Archivo, 'Segoe UI', system-ui, sans-serif; text-decoration: none; border: 2px solid #fff; border-radius: 2px; transition: background-color .2s ease; } .ds-btn-paper:hover { background: #f3ecdb; border-color: #f3ecdb; } .ds-btn-paper:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }"
+    },
+    {
+      "name": "Header Nav",
+      "kind": "nav",
+      "refersTo": "button-small",
+      "description": "Ruled header strip with an underline that draws on hover.",
+      "html": "<header class=\"ds-bar\"><a class=\"ds-name\" href=\"#\">Showdown Helper</a><nav><a href=\"#\">Guide</a><a href=\"#\">Install</a><a href=\"#\">Questions</a></nav></header>",
+      "css": ".ds-bar { display: flex; align-items: center; gap: 28px; height: 64px; padding: 0 24px; background: #fff; color: #17203a; border-bottom: 2px solid #17203a; font-family: Archivo, 'Segoe UI', system-ui, sans-serif; } .ds-name { font-weight: 800; font-size: 19px; letter-spacing: -0.01em; text-decoration: none; color: inherit; margin-right: auto; } .ds-bar nav { display: flex; gap: 26px; } .ds-bar nav a { position: relative; color: inherit; text-decoration: none; font-weight: 500; font-size: 16px; padding: 6px 0; } .ds-bar nav a::after { content: ''; position: absolute; left: 0; right: 0; bottom: 2px; height: 2px; background: #0047ab; transform: scaleX(0); transform-origin: left; transition: transform .35s cubic-bezier(.16,1,.3,1); } .ds-bar nav a:hover::after, .ds-bar nav a:focus-visible::after { transform: scaleX(1); } .ds-bar a:focus-visible { outline: 3px solid #0047ab; outline-offset: 3px; }"
+    },
+    {
+      "name": "Entry Field",
+      "kind": "input",
+      "refersTo": "field-entry",
+      "description": "A filled-in terminal or address entry with its field label.",
+      "html": "<div class=\"ds-entry\"><span class=\"ds-label\">Terminal</span><span>npm install</span><span>node build.mjs</span></div>",
+      "css": ".ds-entry { background: #f3ecdb; border: 1px solid #17203a; padding: 14px 16px; display: grid; gap: 6px; font: 500 16px/1.5 ui-monospace, 'Cascadia Mono', Consolas, monospace; color: #0047ab; } .ds-entry span { white-space: nowrap; } .ds-label { font-family: Archivo, 'Segoe UI', system-ui, sans-serif; font-size: 13px; font-weight: 600; font-stretch: 72%; letter-spacing: .12em; text-transform: uppercase; color: #4a5470; margin-bottom: 2px; }"
+    },
+    {
+      "name": "Question Cell",
+      "kind": "card",
+      "refersTo": "field-band",
+      "description": "Printed prompt on a sand band, inked answer beneath.",
+      "html": "<div class=\"ds-qa\"><dl><dt>Does the panel cover the battle?</dt><dd>No. The panel takes the right quarter of the page.</dd></dl></div>",
+      "css": ".ds-qa { width: 340px; border: 1px solid #17203a; font-family: Archivo, 'Segoe UI', system-ui, sans-serif; background: #fff; } .ds-qa dl { margin: 0; } .ds-qa dt { font-weight: 700; font-size: 19px; line-height: 1.25; letter-spacing: -0.01em; color: #17203a; background: #e4d7b8; padding: 14px 24px; border-bottom: 1px solid #17203a; } .ds-qa dd { margin: 0; color: #0047ab; font-weight: 500; font-size: 18px; line-height: 1.5; padding: 18px 24px 28px; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Small cobalt-outlined tag on white.",
+      "html": "<span class=\"ds-chip\">Flutter Mane</span>",
+      "css": ".ds-chip { display: inline-block; font: 600 13px/1.4 Archivo, 'Segoe UI', system-ui, sans-serif; color: #0047ab; background: #fff; border: 1px solid #0047ab; border-radius: 2px; padding: 3px 9px; }"
+    },
+    {
+      "name": "Install Step Tick",
+      "kind": "custom",
+      "refersTo": "field-entry",
+      "description": "Signature: a square tick box holding a drawn cobalt pen tick.",
+      "html": "<span class=\"ds-tickbox\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 12.5 9.5 19 21 5\"/></svg></span>",
+      "css": ".ds-tickbox { width: 52px; height: 52px; border: 2px solid #17203a; background: #fff; display: grid; place-items: center; } .ds-tickbox svg { width: 34px; height: 34px; overflow: visible; } .ds-tickbox path { fill: none; stroke: #0047ab; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Team List Sheet",
+    "overview": "The page is the team list sheet a VGC player hands the judge: a white printed form lying on a sand desk, ruled in navy, with everything the tool knows written in cobalt ink. Printed text is near-black navy; anything filled in is cobalt. Navy is the form, cobalt is the pen.\n\nDensity is calm and ruled rather than carded. Sections are separated by heavy 2px navy rules, rows by 1px rules, and each section invents the form its question needs. There are no gradients, glows, glass, soft shadows or rounded cards. Corners are square or 2px. Depth comes from tonal sand bands and rules only.",
+    "keyCharacteristics": [
+      "White sheet (max 1240px) on a sand desk, bounded by 1px navy side rules.",
+      "Navy for print, cobalt for ink; one committed cobalt field per page (the closing block).",
+      "One grotesque, Archivo variable, used in two widths: normal and condensed-caps labels.",
+      "Pen marks (rings, ticks) are drawn SVG strokes, never a script face.",
+      "Motion is written-in: text revealed left to right, rules drawn across, nothing loops."
+    ],
+    "rules": [
+      { "name": "The Print and Ink Rule", "body": "Navy is what the form says; cobalt is what was written into it. Never set body copy in cobalt, and never set a printed label in cobalt.", "section": "colors" },
+      { "name": "The One Field Rule", "body": "Cobalt fills a whole block only once per page, at the close. Elsewhere cobalt appears as text, a button, a hairline or a pen stroke.", "section": "colors" },
+      { "name": "The Field Label Rule", "body": "A condensed-caps label exists only to name a filled-in entry beside or beneath it, as on a form. It never sits above a heading as a lead-in.", "section": "typography" },
+      { "name": "The No Lift Rule", "body": "Nothing floats. A hover changes color, underline or arrow position; it never raises a surface.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do set printed text and every rule in Print Navy (#17203a) and set only filled-in content in Cobalt Ink (#0047ab).",
+      "Do open each section with a 2px navy rule and divide rows with 1px rules.",
+      "Do give each section the form its question needs (figure row, checklist, prompt/answer grid) rather than repeating a card.",
+      "Do keep radius at 0px or 2px.",
+      "Do use Print Navy Secondary (#4a5470) for fine print so it stays at 7:1 on white.",
+      "Do build new entrances from rise, write, draw-rule or pen, with the expo-out curve, and honor reduced motion."
+    ],
+    "donts": [
+      "Don't use gradients, glows, glass, soft shadows, or rounded cards; the form is flat and ruled.",
+      "Don't use a handwriting font or emoji for pen marks; marks are drawn SVG strokes.",
+      "Don't fill more than one block with cobalt per page.",
+      "Don't put condensed-caps labels above headings as a lead-in; they name entries only.",
+      "Don't set body paragraphs in cobalt."
+    ]
+  }
+}

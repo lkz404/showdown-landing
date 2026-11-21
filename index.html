@@ -1,333 +1,168 @@
 <!doctype html>
-<html lang="en" data-type="software" data-radius="soft" data-ground="sage" data-buttons="tonal" data-motion>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Showdown Helper: top opponent moves for new VGC players</title>
-<meta name="description" content="A Chrome extension that lists the five most used moves of your opponent’s Pokémon on Pokémon Showdown, with the damage each one does to yours.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Showdown Helper: top moves and damage for Pokémon Showdown</title>
+<meta name="description" content="A Chrome extension for Pokémon Showdown. It shows each opposing Pokémon's five most used moves from Pikalytics and how much of your Pokémon's HP each one takes.">
+<meta name="theme-color" content="#ece2cc">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Showdown Helper: top opponent moves for new VGC players">
-<meta property="og:description" content="The five most used moves of every opponent Pokémon on Pokémon Showdown, and how hard each one hits yours.">
-<meta property="og:image" content="share.jpg">
+<meta property="og:title" content="Showdown Helper: top moves and damage for Pokémon Showdown">
+<meta property="og:description" content="Your opponent's five most used moves, beside the battle. A free Chrome extension for Pokémon Showdown.">
+<meta property="og:image" content="share.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta name="theme-color" content="#1c1c1c">
-<!-- <link rel="canonical" href="https://[the page's domain]/"> -->
-<meta name="site-kind" content="software">
-<meta name="page-type" content="software">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@400..700&family=Funnel+Sans:wght@400..600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/system.css">
-<link rel="stylesheet" href="assets/ui/cards.css">
-<link rel="stylesheet" href="assets/motion/motion.css">
-<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
-<link rel="stylesheet" href="assets/layout/layout.css">
-<link rel="stylesheet" href="assets/icons/icon.css">
-<style>
-:root {
-  --p-bg: #1c1c1c; --p-surface: #262626; --p-ink: #f1f1ef; --p-muted: #9a9b96;
-  --p-accent: #8fa68e; --p-accent-ink: #1c1c1c; --p-action: #8fa68e; --p-action-ink: #1c1c1c;
-  --p-inv-bg: #c8c5ba; --p-inv-surface: #bab8ae; --p-inv-ink: #1c1c1c; --p-inv-muted: #454442;
-  --p-inv-accent: #1c1c1c; --p-inv-accent-ink: #c8c5ba; --p-inv-action: #1c1c1c; --p-inv-action-ink: #c8c5ba;
-  --font-display: "Funnel Display", system-ui, sans-serif;
-  --font-text: "Funnel Sans", system-ui, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  --display-weight: 400;
-  --display-tracking: -0.03em;
-  --display-tracking-xl: -0.04em;
-  --ly-scale: 0.98;
-}
-</style>
-<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
-<script src="assets/backgrounds/backgrounds.js"></script>
-<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
-<link rel="modulepreload" href="assets/moments/moments.js">
-<link rel="modulepreload" href="assets/moments/lib.js">
-<link rel="modulepreload" href="assets/moments/pinned-chapters/moment.js">
-<style>
-  /* ---- the Showdown window and the extension panel, drawn as live HTML (page CSS, inside a visual) ---- */
-  .sw-win { background: #e9eef3; color: #16181a; border-radius: 12px; overflow: hidden; font: 400 13px/1.4 var(--font-text); text-align: left;
-            box-shadow: 0 0 0 1px rgb(0 0 0 / .08), 0 28px 64px -28px rgb(0 0 0 / .55); }
-  .sw-bar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; background: #f6f8fa; border-bottom: 1px solid rgb(0 0 0 / .08); font-size: 13px; color: #5d6268; }
-  .sw-dots { display: flex; gap: 6px; } .sw-dots i { width: 10px; height: 10px; border-radius: 50%; background: #d3d8dd; }
-  .sw-body { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
-  .sw-game { padding: 12px; display: grid; align-content: start; gap: 12px; }
-  .sw-field { position: relative; height: 230px; border-radius: 8px; background: #cfe3f1; overflow: hidden; }
-  .sw-f { position: absolute; object-fit: contain; }
-  .sw-f--a { right: 6px; top: 8px; } .sw-f--b { right: 74px; top: 40px; } .sw-f--c { left: 18px; bottom: 6px; }
-  .sw-log { display: grid; gap: 4px; font-size: 13px; line-height: 1.45; color: #3d4247; }
-  .sw-log p { margin: 0; } .sw-log b { font-weight: 500; color: #16181a; }
-  .sw-panel { min-width: 0; background: #14161e; color: #e8e8f0; padding: 14px 12px 14px 14px; padding-right: var(--ly-cut-room); display: grid; align-content: start; gap: 10px; }
-  .sw-target { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "s l" "s b"; align-items: center; column-gap: 10px; }
-  .sw-tlabel { grid-area: l; font-size: 13px; opacity: .7; align-self: end; }
-  .sw-tsprite { grid-area: s; width: 40px; height: 40px; object-fit: contain; }
-  .sw-select { grid-area: b; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 10px; font-size: 14px; font-weight: 500; background: #2a2d3a; border: 1px solid #555; border-radius: 6px; align-self: start; }
-  .sw-select i { width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-2px); opacity: .7; }
-  .sw-target--big { grid-template-columns: 1fr; grid-template-areas: "l" "s" "b"; justify-items: center; row-gap: 10px; text-align: center; }
-  .sw-target--big .sw-tlabel { align-self: auto; font-size: 13px; }
-  .sw-target--big .sw-tsprite { width: 96px; height: 96px; }
-  .sw-target--big .sw-select { width: 100%; justify-content: center; font-size: 18px; padding: 10px 14px; }
-  .sw-ehead { display: flex; align-items: center; gap: 8px; }
-  .sw-ehead b { font-size: 15px; font-weight: 500; }
-  .sw-esprite { width: 48px; height: 48px; object-fit: contain; }
-  .sw-moves { display: grid; gap: 4px; }
-  .sw-move { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 8px; height: 36px; padding: 0 8px; border: 1px solid rgb(255 255 255 / .1); border-radius: 6px; background: rgb(255 255 255 / .05); }
-  .sw-mname { padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; line-height: 1.25; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sw-dmg { text-align: center; font-size: 19px; font-weight: 800; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .sw-ko { color: #ff5252; text-shadow: 0 0 8px rgb(255 82 82 / .5); }
-  /* the small result card over the hero window's lower-left corner */
-  .hero__art > .ly-piece--note { left: var(--s-6); bottom: var(--s-6); width: 300px; z-index: 2; }
-  .sw-card { background: #fff; color: #16181a; border-radius: 12px; padding: 14px 16px; font: 400 14px/1.4 var(--font-text); text-align: left; box-shadow: 0 0 0 1px rgb(0 0 0 / .07), 0 18px 44px -20px rgb(0 0 0 / .5); }
-  .sw-card h5 { margin: 0; font: 600 14px/1.3 var(--font-text); color: inherit; }
-  .sw-card__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .sw-card__row--icon { justify-content: flex-start; gap: 12px; margin-bottom: 4px; }
-  .sw-chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 99px; font-size: 13px; font-weight: 500; background: #fbe6e3; color: #a3271b; white-space: nowrap; }
-  .sw-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .sw-note { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; color: #3d4247; border-top: 1px solid rgb(0 0 0 / .06); }
-  .sw-note i { width: 18px; height: 18px; border-radius: 50%; flex: none; display: grid; place-items: center; background: #e7f4ec; color: #17673f; font-style: normal; font-size: 13px; font-weight: 700; }
-  .sw-note:first-of-type i, .sw-card[data-ly-steps] .sw-note:nth-of-type(-n+2) i { background: #fdf0dc; color: #8a5300; }
-  .sw-note b { font-weight: 500; color: #16181a; }
-  .sw-red { color: #d62b2b; }
-  .hero__proof { margin: var(--s-5) 0 0; font-size: var(--t-small); color: var(--muted); }
-  .ly-piece--main .sw-panel { padding-right: var(--ly-cut-room); }
-  .sw-body { min-height: 590px; }
-  @media (max-width: 1023px) { .hero__art > .ly-piece--note { left: var(--s-4); bottom: var(--s-4); width: 270px; } }
-  @media (max-width: 639px) {
-    .sw-body { grid-template-columns: minmax(0, 1fr); }
-    .sw-game { display: none; }
-    .sw-panel > .sw-target, .sw-panel > .sw-enemy:nth-of-type(3) { display: none; }
-    .sw-panel .sw-move:nth-of-type(n+4) { display: none; }
-  }
-  /* ---- install cards ---- */
-  .open-cards .panel { --p-h: 248px; background:
-      radial-gradient(80% 70% at 20% 0%, color-mix(in oklab, var(--ground-surface) 80%, white), transparent 70%), var(--ground-bg); }
-  .open-cards .stage > .at-rise { --ax: 20px; --ay: 28px; --fit-max: 300px; }
-  .open-cards > .card { grid-column: 1 / -1; }
-  @media (min-width: 1024px) { .open-cards > .card { grid-column: auto / span 4; } }
-  @media (min-width: 640px) and (max-width: 1023px) {
-    .open-cards > .card { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-auto-rows: min-content; column-gap: var(--s-6); align-content: start; }
-    .open-cards > .card > :not(.panel) { grid-column: 1; }
-    .open-cards > .card > .panel { grid-column: 2; grid-row: 1 / span 4; --p-h: 208px; margin: calc(var(--c-gap) - var(--c-pad)) calc(var(--c-gap) - var(--c-pad)) calc(var(--c-gap) - var(--c-pad)) 0; border-radius: calc(var(--c-r) - var(--c-gap)); }
-  }
-  @media (max-width: 639px) { .open-cards .panel { --p-h: 300px; } .stage > .at-rise { --ay-sm: 24px; } .open-cards > .card > .panel { margin-top: var(--s-5); } }
-  .sw-card--term { background: #14161e; color: #e8e8f0; box-shadow: 0 0 0 1px rgb(255 255 255 / .08), 0 18px 44px -20px rgb(0 0 0 / .6); }
-  .sw-pre { margin: 6px 0 0; font: 400 13px/1.7 var(--font-mono); color: #cfd3da; white-space: pre; }
-  .sw-ok { color: #8fa68e; }
-  .sw-btn { display: inline-flex; align-items: center; height: 30px; margin-top: 4px; padding: 0 12px; border-radius: 7px; background: #16181a; color: #fff; font-size: 13px; font-weight: 500; }
-  /* "Showdown Helper" is 7.9em wide: hand-set so it spans the wrap and never runs past it */
-  .closing .close__word { white-space: nowrap; font-size: clamp(32px, 10.2vw, 148px); line-height: 1.06; padding-top: .04em; }
-  .footer__note { margin: var(--s-5) 0 0; }
-  /* the kit's affordance reads "Credits"; this line holds the trademark note, so it reads "Details" */
-  .footer__legal .credits > summary::after { content: "Details"; }
-  .footer__legal .credits[open] > summary::after { content: "Hide"; }
-  /* the guide at rest on a phone holds its two screens; install and the questions take two phone screens */
-  @media (max-width: 639px) { main > #guide[data-moment]:not(.is-live) { min-height: 200lvh; } }
-  /* the pause disc over the lit ground: a dark ring, so focus shows 3:1 (the kit's sage ring is the ground's own colour) */
-  .hero__art .loop-pause:focus-visible, .hero__art .ui-pause:focus-visible { outline: 2px solid #1c1c1c; outline-offset: 2px; }
-  /* smaller hero art: fewer log lines, so the frame's cut falls in empty margin and never through a line of text */
-  @media (max-width: 1279px) { .sw-log p:nth-of-type(n+5) { display: none; } .sw-field { height: 190px; } }
-  /* tablet: the guide's pictures are 16:9 so its three rows fit one screen; the questions' intro and panel sit side by side */
-  @media (min-width: 640px) and (max-width: 1023px) {
-    [data-moment="pinned-chapters"]:not(.is-live) .mo-pc__visual > img { aspect-ratio: 16 / 9; }
-    .open-cards > .card > .panel { --p-h: 196px; }
-    #questions .span-5 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--s-5); align-items: start; }
-    .closing .close__word { white-space: normal; font-size: clamp(56px, 17vw, 150px); line-height: 1; }
-    #questions .faq__panel { margin-top: 0; }
-  }
-  /* phone: bigger guide pictures and panels so each section fills its screens and the gaps between them even out; a tighter footer */
-  @media (max-width: 639px) {
-    main > #guide[data-moment]:not(.is-live) .mo-pc__visual > img { aspect-ratio: 100 / 96; max-height: none; }
-    .faq__panel { --p-h: 520px !important; }
-    .faq__panel .stage > .at-rise { --ay-sm: 140px; }
-    .faq > .faq__item { padding: var(--s-5) 0; }
-    footer.closing > .wrap { row-gap: var(--s-5); }
-    .closing__links { gap: var(--s-4); }
-  }
-  .faq__panel { --p-h: 200px; margin-top: var(--s-6); background: radial-gradient(80% 70% at 20% 0%, color-mix(in oklab, var(--ground-surface) 80%, white), transparent 70%), var(--ground-bg); }
-  .faq__panel .stage > .at-rise { --ax: 20px; --ay: 24px; --fit-max: 300px; }
-</style>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="site.css">
 </head>
 <body>
-<!-- type: software (site-kind software)
-     deal: hero collage, nav nav-centre (nav-mega dealt, re-dealt: a three-section page has no feature pages to map), footer footer-columns, close close-word,
-           rhythm surface-pairs, buttons tonal, mark dots, palette charcoal-room-sage + funnel, grounds none, effect: the hero's lit ground (CSS, no WebGL)
-     moments: pinned-chapters in #guide -->
+<a class="skip" href="#guide">Skip to content</a>
+<div class="sheet" id="top">
 
-<header class="nav nav--centre">
-  <div class="wrap nav__bar">
-    <a class="skip-link" href="#top">Skip to content</a>
-    <a class="nav__logo" href="#top"><span class="mark" data-mark="dots" aria-hidden="true"></span>Showdown Helper</a>
-    <nav class="nav__links" aria-label="Main">
-      <div class="nav__item"><a class="nav__link" href="#guide">Guide</a></div>
-      <div class="nav__item"><a class="nav__link" href="#install">Install</a></div>
-      <div class="nav__item"><a class="nav__link" href="#questions">Questions</a></div>
+  <header class="bar">
+    <a class="bar-name" href="#top">Showdown Helper</a>
+    <nav class="bar-nav" aria-label="Main">
+      <a href="#guide">Guide</a>
+      <a href="#install">Install</a>
+      <a href="#questions">Questions</a>
     </nav>
-    <div class="nav__actions">
-      <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
-    </div>
-    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
-  </div>
-</header>
+    <a class="btn btn--sm" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9h13M10 4l5 5-5 5"/></svg></a>
+  </header>
 
-<main id="top">
-  <section class="hero hero--collage" data-enter aria-labelledby="hero-h">
-    <div class="wrap"><div class="hero-text grid hero__grid">
-      <div class="hero__text span-5">
-        <h1 id="hero-h">Chrome extension for new VGC players on Showdown</h1>
-        <p class="hero__lead">A Chrome extension that lists the five moves each opponent Pokémon uses most, from Pikalytics, and shows how much damage every one does to your Pokémon.</p>
-        <div class="btn-row"><a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a></div>
-        <p class="hero__proof">Works on Pokémon Showdown in Chrome.</p>
+  <main>
+    <section class="hero">
+      <dl class="entries">
+        <div><dt class="field-label">Works on</dt><dd class="ink write" style="--i:0">Pokémon Showdown</dd></div>
+        <div><dt class="field-label">Browser</dt><dd class="ink write" style="--i:1">Chrome</dd></div>
+        <div><dt class="field-label">Price</dt><dd class="ink write" style="--i:2">Free</dd></div>
+      </dl>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1 class="rise">Your opponent’s five most used moves, beside the battle</h1>
+          <p class="lede rise" style="--i:1">Showdown Helper is a Chrome extension for Pokémon Showdown. For each opposing Pokémon it lists the five moves players run most, and how much of your Pokémon’s HP each one takes.</p>
+          <div class="actions rise" style="--i:2">
+            <a class="btn" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9h13M10 4l5 5-5 5"/></svg></a>
+            <a class="link" href="#install">How to install</a>
+          </div>
+          <p class="fine rise" style="--i:3">It is not on the Chrome Web Store yet, so you install it from the code. That takes three steps.</p>
+        </div>
+        <figure class="hero-fig rise" style="--i:2">
+          <div class="attach">
+            <img src="assets/shots/panel-one.png" width="720" height="1400" alt="The Showdown Helper panel during a battle: Flutter Mane picked as the target, and Urshifu’s five most used moves, each with its type, how often it is used, and the damage it does. Surging Strikes shows 133 to 158 percent in red.">
+            <svg class="ring pen" viewBox="0 0 720 1400" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M468 560 C520 520 650 518 684 566 C710 604 618 640 540 634 C466 626 436 596 452 568 C470 538 566 524 626 536"/></svg>
+          </div>
+          <figcaption class="note-ink write" style="--i:4">Circled: Surging Strikes can knock out Flutter Mane.</figcaption>
+          <p class="fine-print">Example matchup. Move usage is from Pikalytics (VGC Regulation F), fetched November 2026, and changes over time.</p>
+        </figure>
       </div>
-      <div class="hero__art span-6 start-7" role="img" aria-label="Pokémon Showdown on the left and the Showdown Helper panel on the right: Incineroar’s and Urshifu’s five most used moves, each with its damage to Flutter Mane">
-        <div class="ly-piece ly-piece--main sw-win ui" aria-hidden="true">
-          <div class="sw-bar"><span class="sw-dots"><i></i><i></i><i></i></span><span>Pokémon Showdown · Battle</span></div>
-          <div class="sw-body">
-            <div class="sw-game">
-              <div class="sw-field">
-                <img class="sw-f sw-f--a" src="assets/sprites/incineroar.png" alt="" width="72" height="72" loading="lazy" decoding="async"><img class="sw-f sw-f--b" src="assets/sprites/urshifu-rapidstrike.png" alt="" width="72" height="72" loading="lazy" decoding="async"><img class="sw-f sw-f--c" src="assets/sprites/fluttermane.png" alt="" width="80" height="80" loading="lazy" decoding="async">
-              </div>
-              <div class="sw-log">
-                <p><b>Turn 3</b></p>
-                <p>The opposing Incineroar used <b>Fake Out</b>!</p>
-                <p>It doesn’t affect Flutter Mane…</p>
-                <p>Flutter Mane used <b>Icy Wind</b>!</p>
-                <p>The opposing Urshifu’s Speed fell!</p>
-                <p>Flutter Mane is protected by <b>Protosynthesis</b>.</p>
-                <p><b>Turn 4</b></p>
-              </div>
+    </section>
+
+    <section class="block draw-rule" id="guide" aria-labelledby="guide-h">
+      <div class="block-head">
+        <h2 id="guide-h" class="rise">How to read the panel</h2>
+        <p class="rise" style="--i:1">The panel takes the right quarter of the Showdown page. The battle and the turn log stay on the left, so you never lose sight of them.</p>
+      </div>
+      <ol>
+        <li class="gline rise">
+          <div class="gtext">
+            <h3>Pick the Pokémon that gets hit</h3>
+            <p>The four boxes are the Pokémon you brought, each with its HP. Click one and every number below is damage to that Pokémon. Until the first turn it waits, because you have not picked your four yet.</p>
+          </div>
+          <div class="gfig">
+            <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="245" style="aspect-ratio:720/245;object-position:0 6.9%" alt="Four team boxes: Flutter Mane selected with full HP, Incineroar, Rillaboom with low HP, and Amoonguss fainted."> <svg class="pen mark" viewBox="0 0 720 245" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M20 92 C20 56 120 44 190 46 C280 46 368 52 362 92 C358 130 260 142 180 140 C100 138 24 130 28 96 C30 70 100 50 200 48"/></svg></div>
+          </div>
+        </li>
+        <li class="gline rise">
+          <div class="gtext">
+            <h3>See what the opponent can do</h3>
+            <p>Each opposing Pokémon on the field gets a card. It holds the five moves players run most, taken from Pikalytics for the format you are playing. The colour and icon are the move’s type. The small percentage is how often players run it.</p>
+          </div>
+          <div class="gfig">
+            <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="675" loading="lazy" style="aspect-ratio:720/675;object-position:0 48.3%" alt="Urshifu-Rapid-Strike’s card: Surging Strikes 100 percent, Close Combat 99 percent and Aqua Jet 88 percent, each in a box coloured by its type."></div>
+          </div>
+        </li>
+        <li class="gline rise">
+          <div class="gtext">
+            <h3>Check which moves can KO</h3>
+            <p>The big number is the damage as a share of your Pokémon’s HP, from the lowest roll to the highest. It turns red when the highest roll could knock your Pokémon out. 0% means no effect: Close Combat cannot touch a Ghost-type like Flutter Mane.</p>
+          </div>
+          <div class="gfig">
+            <div class="strip">
+              <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="165" loading="lazy" style="aspect-ratio:720/165;object-position:0 40.5%" alt="Surging Strikes at 133 to 158 percent, in red, circled."> <svg class="pen mark" viewBox="0 0 720 165" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M450 80 C470 40 650 36 682 82 C700 118 600 134 540 130 C470 126 436 104 452 78 C468 54 560 44 630 52"/></svg></div>
+              <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="165" loading="lazy" style="aspect-ratio:720/165;object-position:0 55.1%" alt="Close Combat at 0 percent, circled."> <svg class="pen mark" viewBox="0 0 720 165" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M512 80 C520 50 600 46 622 78 C632 108 560 122 524 108 C500 98 510 66 560 54"/></svg></div>
             </div>
-            <div class="sw-panel">
-              <div class="sw-target"><span class="sw-tlabel">Damage vs</span><img class="sw-tsprite" src="assets/sprites/fluttermane.png" alt="" width="40" height="40" loading="lazy" decoding="async"><span class="sw-select">Flutter Mane<i aria-hidden="true"></i></span></div>
-              <div class="sw-enemy"><div class="sw-ehead"><img class="sw-esprite" src="assets/sprites/incineroar.png" alt="" width="48" height="48" loading="lazy" decoding="async"><b>Incineroar</b></div><div class="sw-moves"><div class="sw-move"><span class="sw-mname" style="background:#a8a77a;color:#14161e">Fake Out</span><span class="sw-dmg">0%</span></div><div class="sw-move"><span class="sw-mname" style="background:#ee8130;color:#14161e">Flare Blitz</span><span class="sw-dmg sw-ko">126–149%</span></div><div class="sw-move"><span class="sw-mname" style="background:#705746;color:#fff">Knock Off</span><span class="sw-dmg">69–81%</span></div><div class="sw-move"><span class="sw-mname" style="background:#705746;color:#fff">Parting Shot</span><span class="sw-dmg">—</span></div><div class="sw-move"><span class="sw-mname" style="background:#a6b91a;color:#14161e">U-turn</span><span class="sw-dmg">12–15%</span></div></div></div>
-              <div class="sw-enemy"><div class="sw-ehead"><img class="sw-esprite" src="assets/sprites/urshifu-rapidstrike.png" alt="" width="48" height="48" loading="lazy" decoding="async"><b>Urshifu-Rapid-Strike</b></div><div class="sw-moves"><div class="sw-move"><span class="sw-mname" style="background:#6390f0;color:#14161e">Surging Strikes</span><span class="sw-dmg sw-ko">133–158%</span></div><div class="sw-move"><span class="sw-mname" style="background:#c22e28;color:#fff">Close Combat</span><span class="sw-dmg">0%</span></div><div class="sw-move"><span class="sw-mname" style="background:#6390f0;color:#14161e">Aqua Jet</span><span class="sw-dmg">46–55%</span></div><div class="sw-move"><span class="sw-mname" style="background:#a6b91a;color:#14161e">U-turn</span><span class="sw-dmg">13–16%</span></div><div class="sw-move"><span class="sw-mname" style="background:#c22e28;color:#fff">Detect</span><span class="sw-dmg">—</span></div></div></div>
-            </div>
           </div>
-        </div>
-        <div class="ly-piece ly-piece--note sw-card" aria-hidden="true" data-ly-steps="700">
-          <div class="sw-card__row"><h5>Flare Blitz on Flutter Mane</h5><span class="sw-chip" data-step data-step-at="4">Can KO</span></div>
-          <div class="sw-note" data-step><i>!</i><span>Hits for <b>126–149%</b> of its HP</span></div>
-          <div class="sw-note" data-step><i>!</i><span>The highest roll is <b>enough to KO</b></span></div>
-          <div class="sw-note" data-step><i>✓</i><span>The number turns <b class="sw-red">red</b></span></div>
-        </div>
-      </div>
-    </div></div>
-  </section>
+        </li>
+        <li class="gline rise">
+          <div class="gtext">
+            <h3>Use your real stats</h3>
+            <p>Click the extension’s icon in Chrome’s toolbar and paste a Pokepaste link. Damage then uses the natures, EVs and IVs from your paste, matched to your Pokémon by name. Remove the paste and it goes back to what Showdown reports.</p>
+          </div>
+          <div class="gfig">
+            <div class="shot shot--sm"><img src="assets/shots/popup.png" width="640" height="720" loading="lazy" alt="The extension’s toolbar popup with a Pokepaste link field and an imported team of six Pokémon."></div>
+          </div>
+        </li>
+      </ol>
+    </section>
 
-  <section class="section" id="guide" style="--h: 2" data-moment="pinned-chapters" aria-labelledby="guide-h">
-    <div class="wrap mo-pc__grid">
-      <div class="mo-pc__text">
-        <h2 id="guide-h">Guide to the Showdown Helper panel</h2>
-        <ol class="mo-pc__steps">
-          <li class="mo-pc__step">
-            <h3>Pick your Pokémon</h3>
-            <p>Choose which Pokémon on your team to calculate against. It starts on your active one and keeps your choice as you switch.</p>
-            <figure class="mo-pc__visual"><img src="assets/shots/chapter-1.png" srcset="assets/shots/chapter-1-800.png 800w, assets/shots/chapter-1.png 1600w" sizes="(min-width: 1024px) 628px, (min-width: 640px) 50vw, 100vw" alt="The panel’s picker set to Flutter Mane" width="1600" height="1200" loading="lazy" decoding="async" data-source="client" data-subject="the Showdown Helper panel"></figure>
-          </li>
-          <li class="mo-pc__step">
-            <h3>Read each opponent Pokémon’s moves</h3>
-            <p>Each opponent Pokémon shows its five most used moves, most used first. The colour of a move’s box is its type.</p>
-            <figure class="mo-pc__visual"><img src="assets/shots/chapter-2.png" srcset="assets/shots/chapter-2-800.png 800w, assets/shots/chapter-2.png 1600w" sizes="(min-width: 1024px) 628px, (min-width: 640px) 50vw, 100vw" alt="Urshifu’s five most used moves, each in a box coloured by type" width="1600" height="1200" loading="lazy" decoding="async" data-source="client" data-subject="the Showdown Helper panel"></figure>
-          </li>
-          <li class="mo-pc__step">
-            <h3>Check which moves KO your Pokémon</h3>
-            <p>The big number is the damage as a share of your Pokémon’s HP. It turns red when the strongest roll could knock it out.</p>
-            <figure class="mo-pc__visual"><img src="assets/shots/chapter-3.png" srcset="assets/shots/chapter-3-800.png 800w, assets/shots/chapter-3.png 1600w" sizes="(min-width: 1024px) 628px, (min-width: 640px) 50vw, 100vw" alt="Surging Strikes at 133 to 158 percent in red, Aqua Jet at 46 to 55 percent in white" width="1600" height="1200" loading="lazy" decoding="async" data-source="client" data-subject="the Showdown Helper panel"></figure>
-          </li>
-        </ol>
+    <section class="block draw-rule" id="install" aria-labelledby="install-h">
+      <div class="block-head">
+        <h2 id="install-h" class="rise">Install it in three steps</h2>
+        <p class="rise" style="--i:1">You need Chrome (or another Chromium browser) and Node.js. It takes a few minutes.</p>
       </div>
-      <div class="mo-pc__visuals frame"></div>
+      <ol class="steps">
+        <li class="rise">
+          <span class="tickbox"><svg class="tick pen" viewBox="0 0 24 24" aria-hidden="true"><path pathLength="1" d="M3 12.5 9.5 19 21 5"/></svg></span>
+          <div><h3>Get the code</h3><p>Clone the repository, or download it as a ZIP and unzip it.</p></div>
+          <div class="entry"><span class="field-label">Repository</span><a href="https://github.com/lkz404/showdown-helper">github.com/lkz404/showdown-helper</a></div>
+        </li>
+        <li class="rise">
+          <span class="tickbox"><svg class="tick pen" viewBox="0 0 24 24" aria-hidden="true"><path pathLength="1" d="M3 12.5 9.5 19 21 5"/></svg></span>
+          <div><h3>Build it</h3><p>Open a terminal in the folder and run two commands.</p></div>
+          <div class="entry"><span class="field-label">Terminal</span><span>npm install</span><span>node build.mjs</span></div>
+        </li>
+        <li class="rise">
+          <span class="tickbox"><svg class="tick pen" viewBox="0 0 24 24" aria-hidden="true"><path pathLength="1" d="M3 12.5 9.5 19 21 5"/></svg></span>
+          <div><h3>Load it in Chrome</h3><p>Turn on Developer mode, choose Load unpacked, and pick the folder that holds <code>manifest.json</code>. Then start a battle on Showdown.</p></div>
+          <div class="entry"><span class="field-label">Address bar</span><span>chrome://extensions</span></div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block draw-rule" id="questions" aria-labelledby="questions-h">
+      <div class="block-head">
+        <h2 id="questions-h" class="rise">Questions</h2>
+        <p class="rise" style="--i:1">Each answer comes from what the extension does today.</p>
+      </div>
+      <dl class="qa">
+        <div class="rise"><dt>Which opposing Pokémon does it show?</dt><dd class="write">The ones on the field right now, one card each. In doubles that is two cards. It updates after each move’s animation finishes.</dd></div>
+        <div class="rise"><dt>Does the panel cover the battle?</dt><dd class="write">No. Showdown shrinks to the left three quarters of the page and the panel takes the right quarter. You can collapse it to a small tab.</dd></div>
+        <div class="rise"><dt>Where does the move data come from?</dt><dd class="write">Pikalytics, for the format you are playing. If it has nothing for that format, the panel uses VGC Regulation F data and says so.</dd></div>
+        <div class="rise"><dt>How is the damage worked out?</dt><dd class="write">With the engine behind Showdown’s damage calculator. It assumes the opponent has maximum Attack or Special Attack. Your Pokémon use their real stats.</dd></div>
+        <div class="rise"><dt>Does it know the opponent’s item or Tera type?</dt><dd class="write">Only once Showdown shows them. Until then it assumes none, so read each number as a rough worst case, not a promise.</dd></div>
+        <div class="rise"><dt>Which browsers work?</dt><dd class="write">Chrome and other Chromium browsers. Firefox is not supported.</dd></div>
+      </dl>
+    </section>
+
+    <section class="close" aria-labelledby="close-h">
+      <h2 id="close-h" class="rise">Load it before your next battle</h2>
+      <p>Free, and the code is on GitHub.</p>
+      <a class="btn btn--paper rise" style="--i:2" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9h13M10 4l5 5-5 5"/></svg></a>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div>
+      <strong>Showdown Helper</strong>
+      <nav aria-label="Footer">
+        <a href="https://github.com/lkz404/showdown-helper">Extension code</a>
+        <a href="https://github.com/lkz404/showdown-landing">This page’s code</a>
+      </nav>
     </div>
-  </section>
-
-  <section class="section ground-surface" id="install" style="--hm: 2" aria-labelledby="install-h">
-    <div class="wrap">
-      <div class="section-head">
-        <h2 id="install-h">Install it in 3 steps. <span class="muted">It isn’t in the Chrome Web Store.</span></h2>
-      </div>
-      <div class="grid open-cards">
-        <article class="card card--row">
-          <h3>Get the extension code</h3>
-          <p>Clone or download the repository from GitHub.</p>
-          <div class="panel panel--inset" role="img" aria-label="A GitHub repository card with a Download ZIP option">
-            <div class="stage"><div class="at-rise fit" aria-hidden="true"><div class="sw-card sw-card--static ui"><div class="sw-card__row sw-card__row--icon"><span class="ic-tile ic-tile--40"><img class="ic ic-40 ic-ink" src="assets/icons/github.svg" alt="" width="40" height="39" loading="lazy" decoding="async"></span><h5>showdown-helper</h5></div><div class="sw-note"><i>✓</i><span><b>Clone</b> with Git</span></div><div class="sw-note"><i>✓</i><span><b>Download ZIP</b> and unzip it</span></div></div></div></div>
-          </div>
-        </article>
-        <article class="card card--row">
-          <h3>Build the extension</h3>
-          <p>Run two commands in the folder. You need Node.js installed.</p>
-          <div class="panel panel--inset" role="img" aria-label="A terminal running npm install and node build.mjs">
-            <div class="stage"><div class="at-rise fit" aria-hidden="true"><div class="sw-card sw-card--term ui"><div class="sw-card__row sw-card__row--icon"><span class="ic-tile ic-tile--40"><img class="ic ic-40 " src="assets/icons/nodejs.svg" alt="" width="35" height="40" loading="lazy" decoding="async"></span><h5>Terminal</h5></div><pre class="sw-pre"><span>$ npm install</span>
-<span>$ node build.mjs</span>
-<span class="sw-ok">Done</span></pre></div></div></div>
-          </div>
-        </article>
-        <article class="card card--row">
-          <h3>Load the extension in Chrome</h3>
-          <p>Open chrome://extensions, turn on Developer mode, choose Load unpacked and pick the folder.</p>
-          <div class="panel panel--inset" role="img" aria-label="Chrome’s extensions page with Developer mode on and a Load unpacked button">
-            <div class="stage"><div class="at-rise fit" aria-hidden="true"><div class="sw-card sw-card--static ui"><div class="sw-card__row sw-card__row--icon"><span class="ic-tile ic-tile--40"><img class="ic ic-40 " src="assets/icons/chrome.svg" alt="" width="40" height="40" loading="lazy" decoding="async"></span><h5>Extensions</h5></div><div class="sw-note"><i>✓</i><span><b>Developer mode</b> on</span></div><span class="sw-btn">Load unpacked</span></div></div></div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="questions" style="--hm: 2" aria-labelledby="questions-h">
-    <div class="wrap">
-      <div class="grid grid--top">
-        <div class="span-5">
-          <div class="section-head">
-            <h2 id="questions-h">Questions</h2>
-            <p>What it shows, and what it can’t know.</p>
-          </div>
-          <div class="panel panel--inset faq__panel" role="img" aria-label="What the damage numbers assume: maximum offence for the opponent, no item until revealed, your Pokémon’s real stats">
-            <div class="stage"><div class="at-rise fit" aria-hidden="true"><div class="sw-card sw-card--static ui"><div class="sw-card__row"><h5>Each number assumes</h5></div><div class="sw-note"><i>!</i><span>Opponent offence <b>at maximum</b></span></div><div class="sw-note"><i>!</i><span>Opponent item <b>none until shown</b></span></div><div class="sw-note"><i>✓</i><span>Your Pokémon’s <b>real stats</b></span></div></div></div></div>
-          </div>
-        </div>
-        <div class="span-6 start-7 faq">
-          <div class="faq__item"><h3>Which opponent Pokémon does it show?</h3><p>The opponent’s active Pokémon, one card each. In doubles that is two cards.</p></div>
-          <div class="faq__item"><h3>Does the panel cover the Showdown battle?</h3><p>No. Showdown shrinks to the left three quarters, so the battle and the turn log stay in view.</p></div>
-          <div class="faq__item"><h3>Where does the Pikalytics data come from?</h3><p>It matches the format you are playing. With no data for it, the panel uses VGC Regulation F.</p></div>
-          <div class="faq__item"><h3>How does the extension work out damage?</h3><p>With the engine behind the Showdown damage calculator, using your Pokémon’s real stats.</p></div>
-          <div class="faq__item"><h3>Does the extension know an opponent’s item?</h3><p>No. It assumes none until Showdown reveals one, so read each number as a worst case.</p></div>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-
-<footer class="footer closing" id="contact" aria-labelledby="close-h">
-  <div class="wrap">
-    <div class="closing__cta close--word">
-      <div class="section-head--split">
-        <div><h2 id="close-h">Get the code on GitHub</h2></div>
-        <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
-      </div>
-      <p class="close__word" aria-hidden="true">Showdown Helper</p>
-    </div>
-    <div class="closing__links">
-      <div class="grid">
-        <div class="span-6 stack-5">
-          <a class="nav__logo" href="#top"><span class="mark" data-mark="dots" aria-hidden="true"></span>Showdown Helper</a>
-          <p class="footer__lede">Opponent moves for Pokémon Showdown.</p>
-        </div>
-        <div class="span-6 start-7 footer__col"><h3>Page</h3><ul><li><a href="#guide">Guide</a></li><li><a href="#install">Install</a></li><li><a href="#questions">Questions</a></li></ul></div>
-      </div>
-      <div class="footer__legal">
-        <span>&copy; 2026 Showdown Helper</span>
-        <details class="credits"><summary>Trademarks and affiliation</summary><p>Pokémon names and sprites, and the GitHub, Chrome and Node.js logos, are trademarks of their owners. Showdown Helper is not affiliated with Nintendo, Game Freak, Pokémon Showdown or Pikalytics.</p></details>
-      </div>
-    </div>
-  </div>
-</footer>
-
-<nav class="actionbar" aria-label="Quick actions">
-  <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
-</nav>
-
-<script type="module" src="assets/system.js"></script>
-<script type="module" src="assets/motion/motion.js"></script>
-<script type="module" src="assets/layout/layout.js"></script>
+    <p>Pokémon, its names, sprites and types are trademarks of their owners. Showdown Helper is a fan project and is not affiliated with Nintendo, Game Freak, Pokémon Showdown or Pikalytics. Type icons by duiker101.</p>
+  </footer>
+</div>
+<script src="site.js"></script>
 </body>
 </html>

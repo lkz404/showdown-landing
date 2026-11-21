@@ -1,0 +1,48 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Renders the extension's real built panel (dist/content.js + panel.css) with fixed battle data,
+     so the landing page can show real UI captures. Used only by tools/capture.mjs. -->
+<link rel="stylesheet" href="/ext/dist/panel.css">
+<style>
+  html, body { margin: 0; background: #14161e; }
+  #smh-panel { position: static !important; width: 360px !important; height: 100vh !important; border: 0 !important; }
+  html.smh-docked body { width: auto !important; max-width: none !important; height: auto !important; overflow: visible !important; }
+</style>
+<script>
+  // Pikalytics gen9vgc2026regf top moves, fetched with the extension's own pikalytics.js on 2026-11-21.
+  const MOVES = {
+    'Urshifu-Rapid-Strike': [['Surging Strikes', 99.999], ['Close Combat', 98.9], ['Aqua Jet', 87.684], ['U-turn', 45.468], ['Detect', 37.2]],
+    'Incineroar': [['Fake Out', 99.62], ['Flare Blitz', 88.346], ['Knock Off', 81.774], ['Parting Shot', 70.722], ['U-turn', 28.112]],
+  };
+  const paste = new URLSearchParams(location.search).get('popup') === '1';
+  window.chrome = {
+    runtime: {
+      lastError: null,
+      sendMessage: (m, cb) => setTimeout(() => cb({ ok: true, data: { format: m.format, moves: (MOVES[m.species] || []).map(([move, pct]) => ({ move, pct })) } }), 0),
+    },
+    storage: {
+      local: {
+        get: (k, cb) => cb(paste ? { smh_paste: { link: 'https://pokepast.es/example', sets: ['Flutter Mane', 'Incineroar', 'Rillaboom', 'Urshifu-Rapid-Strike', 'Amoonguss', 'Landorus-Therian'].map((species) => ({ species })) } } : {}),
+        set: () => Promise.resolve(), remove: () => Promise.resolve(),
+      },
+      onChanged: { addListener() {} },
+    },
+  };
+</script>
+<script src="/ext/dist/content.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const mon = (species, hp, max, stats, extra = {}) => ({ key: species, species, level: 50, stats: { hp: max, ...stats }, curHP: hp, maxhp: max, status: '', fainted: hp === 0, active: false, item: '', ability: '', tera: '', ...extra });
+  const enemy = (species, spriteid) => ({ species, spriteid, level: 50, status: '', boosts: {}, ability: '', item: '', tera: '' });
+  const snap = {
+    roomid: 'battle-gen9vgc2026regf-1', format: 'gen9vgc2026regf', gen: 9, gameType: 'doubles', weather: '', terrain: '', started: true,
+    enemy: q.get('two') === '1' ? [enemy('Urshifu-Rapid-Strike', 'urshifu-rapidstrike'), enemy('Incineroar', 'incineroar')] : [enemy('Urshifu-Rapid-Strike', 'urshifu-rapidstrike')],
+    team: [
+      mon('Flutter Mane', 131, 131, { atk: 50, def: 70, spa: 150, spd: 110, spe: 170 }, { ability: 'protosynthesis', active: true }),
+      mon('Incineroar', 202, 202, { atk: 136, def: 110, spa: 90, spd: 156, spe: 80 }, { active: true }),
+      mon('Rillaboom', 62, 207, { atk: 192, def: 110, spa: 80, spd: 110, spe: 100 }),
+      mon('Amoonguss', 0, 236, { atk: 85, def: 100, spa: 90, spd: 110, spe: 40 }),
+    ],
+  };
+  setTimeout(() => window.postMessage({ source: 'smh', snapshot: snap }, location.origin), 50);
+</script>
