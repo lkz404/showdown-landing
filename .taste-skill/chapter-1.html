@@ -1,0 +1,74 @@
+<!doctype html><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Funnel+Sans:wght@400..600&display=swap" rel="stylesheet"><style>:root{--font-text:"Funnel Sans",system-ui,sans-serif;--ly-cut-room:0px}
+  /* ---- the Showdown window and the extension panel, drawn as live HTML (page CSS, inside a visual) ---- */
+  .sw-win { background: #e9eef3; color: #16181a; border-radius: 12px; overflow: hidden; font: 400 13px/1.4 var(--font-text); text-align: left;
+            box-shadow: 0 0 0 1px rgb(0 0 0 / .08), 0 28px 64px -28px rgb(0 0 0 / .55); }
+  .sw-bar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; background: #f6f8fa; border-bottom: 1px solid rgb(0 0 0 / .08); font-size: 13px; color: #5d6268; }
+  .sw-dots { display: flex; gap: 6px; } .sw-dots i { width: 10px; height: 10px; border-radius: 50%; background: #d3d8dd; }
+  .sw-body { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  .sw-game { padding: 12px; display: grid; align-content: start; gap: 12px; }
+  .sw-field { position: relative; height: 230px; border-radius: 8px; background: #cfe3f1; overflow: hidden; }
+  .sw-f { position: absolute; object-fit: contain; }
+  .sw-f--a { right: 6px; top: 8px; } .sw-f--b { right: 74px; top: 40px; } .sw-f--c { left: 18px; bottom: 6px; }
+  .sw-log { display: grid; gap: 4px; font-size: 13px; line-height: 1.45; color: #3d4247; }
+  .sw-log p { margin: 0; } .sw-log b { font-weight: 500; color: #16181a; }
+  .sw-panel { min-width: 0; background: #14161e; color: #e8e8f0; padding: 14px 12px 14px 14px; padding-right: var(--ly-cut-room); display: grid; align-content: start; gap: 10px; }
+  .sw-target { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "s l" "s b"; align-items: center; column-gap: 10px; }
+  .sw-tlabel { grid-area: l; font-size: 13px; opacity: .7; align-self: end; }
+  .sw-tsprite { grid-area: s; width: 40px; height: 40px; object-fit: contain; }
+  .sw-select { grid-area: b; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 10px; font-size: 14px; font-weight: 500; background: #2a2d3a; border: 1px solid #555; border-radius: 6px; align-self: start; }
+  .sw-select i { width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-2px); opacity: .7; }
+  .sw-target--big { grid-template-columns: 1fr; grid-template-areas: "l" "s" "b"; justify-items: center; row-gap: 10px; text-align: center; }
+  .sw-target--big .sw-tlabel { align-self: auto; font-size: 13px; }
+  .sw-target--big .sw-tsprite { width: 96px; height: 96px; }
+  .sw-target--big .sw-select { width: 100%; justify-content: center; font-size: 18px; padding: 10px 14px; }
+  .sw-ehead { display: flex; align-items: center; gap: 8px; }
+  .sw-ehead b { font-size: 15px; font-weight: 500; }
+  .sw-esprite { width: 48px; height: 48px; object-fit: contain; }
+  .sw-moves { display: grid; gap: 4px; }
+  .sw-move { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 8px; height: 36px; padding: 0 8px; border: 1px solid rgb(255 255 255 / .1); border-radius: 6px; background: rgb(255 255 255 / .05); }
+  .sw-mname { padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; line-height: 1.25; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sw-dmg { text-align: center; font-size: 19px; font-weight: 800; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .sw-ko { color: #ff5252; text-shadow: 0 0 8px rgb(255 82 82 / .5); }
+  /* the small result card over the hero window's lower-left corner */
+  .hero__art > .ly-piece--note { left: var(--s-6); bottom: var(--s-6); width: 300px; z-index: 2; }
+  .sw-card { background: #fff; color: #16181a; border-radius: 12px; padding: 14px 16px; font: 400 14px/1.4 var(--font-text); text-align: left; box-shadow: 0 0 0 1px rgb(0 0 0 / .07), 0 18px 44px -20px rgb(0 0 0 / .5); }
+  .sw-card h5 { margin: 0; font: 600 14px/1.3 var(--font-text); color: inherit; }
+  .sw-card__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .sw-card__row--icon { justify-content: flex-start; gap: 12px; margin-bottom: 4px; }
+  .sw-chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 99px; font-size: 13px; font-weight: 500; background: #fbe6e3; color: #a3271b; white-space: nowrap; }
+  .sw-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .sw-note { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; color: #3d4247; border-top: 1px solid rgb(0 0 0 / .06); }
+  .sw-note i { width: 18px; height: 18px; border-radius: 50%; flex: none; display: grid; place-items: center; background: #e7f4ec; color: #17673f; font-style: normal; font-size: 13px; font-weight: 700; }
+  .sw-note:first-of-type i, .sw-card[data-ly-steps] .sw-note:nth-of-type(-n+2) i { background: #fdf0dc; color: #8a5300; }
+  .sw-note b { font-weight: 500; color: #16181a; }
+  .sw-red { color: #d62b2b; }
+  .hero__proof { margin: var(--s-5) 0 0; font-size: var(--t-small); color: var(--muted); }
+  .ly-piece--main .sw-panel { padding-right: var(--ly-cut-room); }
+  .sw-body { min-height: 590px; }
+  @media (max-width: 1023px) { .hero__art > .ly-piece--note { left: var(--s-4); bottom: var(--s-4); width: 270px; } }
+  @media (max-width: 639px) {
+    .sw-body { grid-template-columns: minmax(0, 1fr); }
+    .sw-game { display: none; }
+    .sw-panel > .sw-target, .sw-panel > .sw-enemy:nth-of-type(3) { display: none; }
+    .sw-panel .sw-move:nth-of-type(n+4) { display: none; }
+  }
+  
+  html, body { margin: 0; background: #cdd5c4; }
+  .sw-stage { width: 800px; height: 600px; display: grid; place-items: center; box-sizing: border-box; padding: 40px;
+              background: radial-gradient(70% 60% at 18% 12%, #e9eee4, transparent 70%), radial-gradient(60% 50% at 90% 100%, #b8c3ac, transparent 70%), #cdd5c4; }
+  .sw-dark { width: 420px; background: #14161e; color: #e8e8f0; border-radius: 14px; padding: 20px; font: 400 15px/1.4 var(--font-text); box-shadow: 0 0 0 1px rgb(255 255 255 / .06), 0 28px 60px -24px rgb(0 0 0 / .7); }
+  .sw-dark--picker { width: 340px; }
+  .sw-move { height: 44px; }
+  .sw-mname { font-size: 15px; }
+  .sw-dmg { font-size: 24px; }
+  .sw-ehead b { font-size: 17px; }
+  .sw-esprite { width: 56px; height: 56px; }
+  .sw-move--names { grid-template-columns: minmax(0, 1fr); }
+  .sw-move--names .sw-mname { padding: 5px 14px; font-size: 16px; }
+  .sw-move--big { height: 84px; }
+  .sw-move--big .sw-mname { font-size: 18px; padding: 6px 14px; }
+  .sw-move--big .sw-dmg { font-size: 40px; }
+  .sw-dark--two { width: 460px; } .sw-dark--two .sw-moves { gap: 12px; }
+  .sw-target--big .sw-tsprite { width: 110px; height: 110px; }
+  .sw-target--big .sw-select { font-size: 20px; padding: 12px 16px; }
+</style><div class="sw-stage "><div class="sw-dark sw-dark--picker"><div class="sw-target sw-target--big"><span class="sw-tlabel">Damage vs</span><img class="sw-tsprite" src="../assets/sprites/fluttermane.png" alt="" width="96" height="96" loading="lazy" decoding="async"><span class="sw-select">Flutter Mane<i aria-hidden="true"></i></span></div></div></div>
