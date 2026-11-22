@@ -1,168 +1,1102 @@
 <!doctype html>
-<html lang="en">
+<!-- Built by tools/page.mjs from index.src.html: edit that file, then run node tools/page.mjs. -->
+<html lang="en" data-type="software" data-radius="sharp" data-ground="sky" data-buttons="arrow" data-motion>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Showdown Helper: top moves and damage for Pokémon Showdown</title>
-<meta name="description" content="A Chrome extension for Pokémon Showdown. It shows each opposing Pokémon's five most used moves from Pikalytics and how much of your Pokémon's HP each one takes.">
-<meta name="theme-color" content="#ece2cc">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Showdown Helper: opponent moves and damage for Pokémon Showdown VGC</title>
+<meta name="description" content="A free Chrome extension for Pokémon Showdown. Beside the battle it lists each opposing Pokémon's five most used moves from Pikalytics and how much of your Pokémon's HP each one takes.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Showdown Helper: top moves and damage for Pokémon Showdown">
-<meta property="og:description" content="Your opponent's five most used moves, beside the battle. A free Chrome extension for Pokémon Showdown.">
-<meta property="og:image" content="share.png">
+<meta property="og:title" content="Showdown Helper: opponent moves and damage for Pokémon Showdown VGC">
+<meta property="og:description" content="Your opponent's five most used moves, with damage to your team, beside the battle.">
+<meta property="og:image" content="share.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#ffffff">
+<!-- <link rel="canonical" href="https://[the page's domain, once there is one]/"> -->
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
 <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
-<script>document.documentElement.classList.add('js')</script>
-<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+/* Archivo, the brand's face, served from the page (the same files the extension ships) */
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
+  src: url("assets/fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
+  src: url("assets/fonts/archivo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+:root { --p-bg:#ffffff; --p-surface:#f3ecdb; --p-ink:#17203a; --p-muted:#4a5470; --p-accent:#0047ab; --p-accent-ink:#ffffff; --p-action:#0047ab; --p-action-ink:#ffffff; --p-inv-bg:#17203a; --p-inv-surface:#242d46; --p-inv-ink:#ffffff; --p-inv-muted:#9ea3b0; --p-inv-accent:#ffffff; --p-inv-accent-ink:#17203a; --p-inv-action:#ffffff; --p-inv-action-ink:#17203a; --font-display:"Archivo", "Segoe UI", system-ui, sans-serif; --font-text:"Archivo", "Segoe UI", system-ui, sans-serif; --font-mono:ui-monospace, "Cascadia Mono", Consolas, monospace; --display-weight:500; --display-tracking:-0.025em; --display-tracking-xl:-0.035em; --display-stretch:80%; --ly-scale:0.9; --t-h2: clamp(28px, 1.2vw + 22px, 40px); }
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/window/fragment.css">
+<link rel="stylesheet" href="assets/ui/terminal-run/fragment.css">
+<link rel="stylesheet" href="assets/ui/toggles/fragment.css">
+<!-- the extension's own panel stylesheet, scoped to .smh-sheet by tools/fragments.mjs -->
+<link rel="stylesheet" href="assets/panel/panel.css">
+<style>
+/* page CSS, inside the visuals only */
+/* the panel, shown inline: its real markup, pasted by tools/page.mjs */
+.smh-sheet.smh-sheet { position: relative; inset: auto; width: 100%; height: auto; min-height: 0; z-index: auto; border-left: 0; }
+/* the live panel splits the window's height between its cards; inline each card takes its own height */
+.smh-sheet .smh-body, .smh-sheet .smh-card { flex: none; }
+.smh-sheet .smh-moves { flex: none; height: 290px; max-height: none; }
+/* hero: the panel's pieces on a cobalt field */
+.hero--triptych .ly-collage { background: var(--p-accent); border-radius: 2px; }
+.ly-collage .ly-piece.is-sheet { background: var(--p-bg); border: 2px solid var(--p-ink); border-radius: 2px; box-shadow: none; overflow: hidden; }
+.ly-collage .ly-piece.is-sheet .smh-sheet { border: 0; }
+.hero--triptych .hero__cta .btn { height: var(--btn-h); padding-inline: var(--s-5); font-size: 15px; }
+.ly-collage .loop-pause:focus-visible { outline-color: var(--p-bg); }
+/* the piece that ends at 96% keeps its lower-right corner clear for the pause disc, as the live panel has room under its cards */
+.ly-collage .ly-piece.is-sheet[style*="bottom"] .smh-sheet { padding-bottom: 64px; }
+/* a phone: one piece a set, the card, whole inside the collage */
+@media (max-width: 639px) {
+  .ly-collage .ly-piece.is-sheet:not([style*="bottom"]) { display: none; }
+  .ly-collage .ly-piece.is-sheet[style*="bottom"] { left: 4% !important; right: 4% !important; width: auto !important; }
+  .ly-collage .smh-sheet .smh-moves { height: 200px; }
+  .ly-collage .ly-piece.is-sheet[style*="bottom"] .smh-sheet { padding-bottom: 52px; }
+}
+/* the lit ground behind the UI in the brand's cobalt and sand */
+html[data-ground="sky"] { --ground-accent: #0047ab; --ground-surface: #f3ecdb; }
+/* the app frame: your team from the paste beside the open panel */
+.app.ui { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); margin-top: var(--s-7); background: var(--u-bg); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); }
+.app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+.app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+.app > .app__pane::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--u-bg)); pointer-events: none; }
+.app > .app__pane--open { -webkit-mask-image: linear-gradient(#000 calc(100% - 96px), transparent); mask-image: linear-gradient(#000 calc(100% - 96px), transparent); }
+@media (max-width: 1023px) {
+  .app.ui.app.ui { grid-template-rows: minmax(0, 1fr); }
+  .app > .app__pane--list { display: none; }
+  .app > .app__pane--open { -webkit-mask-image: none; mask-image: none; border-top: 0 !important; }
+  .app > .app__pane--open::after { display: none; }
+  .app .app__pane--open > .smh-sheet { height: 100%; }
+  .app .app__pane--open .smh-card + .smh-card { display: none; }
+  .app .app__pane--open .smh-body, .app .app__pane--open .smh-card { flex: 1 1 0; }
+  .app .app__pane--open .smh-moves { flex: 1 1 0; height: auto; max-height: 340px; }
+}
+.app .app__pane--open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.app .app__pane--open > .smh-sheet + .smh-sheet { border-left: 2px solid var(--color-rule); }
+.app .ui-avatar:has(img) { background: var(--p-surface); overflow: hidden; }
+.app .ui-avatar img { width: 100%; height: 100%; object-fit: contain; }
+@media (min-width: 1024px) and (max-width: 1279px) { .app.ui { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); } }
+@media (max-width: 1023px) {
+  .app.ui { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .app > .app__pane--list { max-height: 252px; }
+  .app > .app__pane--list::after { display: none; }
+  .app .ui-win__side { display: none; }
+  .app .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+  .app > .app__pane + .app__pane { border-left: 0; border-top: 1px solid var(--u-line); }
+}
+@media (max-width: 639px) {
+  .app.ui { grid-template-rows: minmax(0, 1fr); }
+  .app > .app__pane--list { display: none; }
+  .app > .app__pane + .app__pane { border-top: 0; }
+  .app .app__pane--open { grid-template-columns: minmax(0, 1fr); }
+  .app .app__pane--open > .smh-sheet + .smh-sheet { display: none; }
+}
+/* feature cards: one panel height; the sheet pieces sit on the ground like the kit's fragments */
+/* the name across the .wrap, hand-set: "Showdown Helper" is 15 characters */
+.close__word { font-size: clamp(28px, calc(11.6vw - 4px), 168px); }
+#guide .panel { --p-h: 360px; }
+#guide .smh-sheet .smh-moves { height: 250px; }
+@media (min-width: 640px) and (max-width: 1023px) {
+  #guide .panel { --p-h: max(360px, calc(100svh - 480px)); }
+  #guide .stage > div { width: min(360px, calc(100% - 48px)) !important; --ax: 24px !important; }
+}
+#install .at-phone { display: none; }
+@media (max-width: 639px) { #install .at-phone { display: block; } }
+/* the split's frame and the questions' frame: 5:4, square on a phone, on the lit ground */
+#install .frame { --ratio: 500px; }
+#questions .frame { --ratio: 400px; }
+#questions .smh-sheet .smh-moves { height: 250px; }
+/* a tablet keeps both splits side by side, so each section stays one screen */
+@media (min-width: 640px) and (max-width: 1023px) {
+  #install .grid > .span-5, #questions .grid > .span-5 { grid-column: 1 / span 6; }
+  #install .grid > .frame, #questions .grid > .faq { grid-column: 7 / span 6; }
+  #questions .stage > div { width: calc(100% - 32px) !important; --ax: 16px !important; }
+  #install .frame { --ratio: 640px; }
+}
+/* a phone: two screens each; the install frame also shows step 2 under the build */
+@media (max-width: 639px) {
+  #install, #questions, footer.closing { --h: 2; }
+  #install .frame { --ratio: 860px; }
+  .hero--triptych .hero__cta { margin-bottom: var(--s-8); }
+  .ly-collage .smh-sheet .smh-moves { height: 180px !important; }
+  /* the app frame on a phone: the panel's header and its first card, filling the pane */
+  .app .app__pane--open .smh-target { display: none; }
+  #questions .frame { --ratio: 600px; }
+}
+
+@media (max-width: 639px) {
+  #guide .panel { --p-h: 150px; }
+  /* a phone shows each card's top move, whole */
+  #guide .smh-sheet .smh-moves { height: 44px; grid-template-rows: minmax(0, 1fr); }
+  #guide .smh-sheet .smh-move:nth-child(n+2) { display: none; }
+  #guide .stage > div { width: calc(100% - 32px) !important; }
+}
+.stage .smh-sheet { border: 2px solid var(--color-rule); border-radius: 2px; }
+#install .ui-term__t { width: 64px; }
+</style>
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/word-highlight/moment.js">
 </head>
 <body>
-<a class="skip" href="#guide">Skip to content</a>
-<div class="sheet" id="top">
+<!-- type: software
+     deal: hero triptych, nav-centre, close-word, footer-columns, rhythm dark-band, buttons arrow, mark dots,
+     grounds paper (hero), the lit ground sand; effect grain-gradient (the guide cards' still grounds)
+     moments: word-highlight (#data, the statement)
+     palette: the brand's own (start.mjs brand): white sheet, navy ink, cobalt, sand, as in the extension -->
 
-  <header class="bar">
-    <a class="bar-name" href="#top">Showdown Helper</a>
-    <nav class="bar-nav" aria-label="Main">
-      <a href="#guide">Guide</a>
-      <a href="#install">Install</a>
-      <a href="#questions">Questions</a>
-    </nav>
-    <a class="btn btn--sm" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9h13M10 4l5 5-5 5"/></svg></a>
-  </header>
-
-  <main>
-    <section class="hero">
-      <dl class="entries">
-        <div><dt class="field-label">Works on</dt><dd class="ink write" style="--i:0">Pokémon Showdown</dd></div>
-        <div><dt class="field-label">Browser</dt><dd class="ink write" style="--i:1">Chrome</dd></div>
-        <div><dt class="field-label">Price</dt><dd class="ink write" style="--i:2">Free</dd></div>
-      </dl>
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <h1 class="rise">Your opponent’s five most used moves, beside the battle</h1>
-          <p class="lede rise" style="--i:1">Showdown Helper is a Chrome extension for Pokémon Showdown. For each opposing Pokémon it lists the five moves players run most, and how much of your Pokémon’s HP each one takes.</p>
-          <div class="actions rise" style="--i:2">
-            <a class="btn" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9h13M10 4l5 5-5 5"/></svg></a>
-            <a class="link" href="#install">How to install</a>
-          </div>
-          <p class="fine rise" style="--i:3">It is not on the Chrome Web Store yet, so you install it from the code. That takes three steps.</p>
-        </div>
-        <figure class="hero-fig rise" style="--i:2">
-          <div class="attach">
-            <img src="assets/shots/panel-one.png" width="720" height="1400" alt="The Showdown Helper panel during a battle: Flutter Mane picked as the target, and Urshifu’s five most used moves, each with its type, how often it is used, and the damage it does. Surging Strikes shows 133 to 158 percent in red.">
-            <svg class="ring pen" viewBox="0 0 720 1400" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M468 560 C520 520 650 518 684 566 C710 604 618 640 540 634 C466 626 436 596 452 568 C470 538 566 524 626 536"/></svg>
-          </div>
-          <figcaption class="note-ink write" style="--i:4">Circled: Surging Strikes can knock out Flutter Mane.</figcaption>
-          <p class="fine-print">Example matchup. Move usage is from Pikalytics (VGC Regulation F), fetched November 2026, and changes over time.</p>
-        </figure>
-      </div>
-    </section>
-
-    <section class="block draw-rule" id="guide" aria-labelledby="guide-h">
-      <div class="block-head">
-        <h2 id="guide-h" class="rise">How to read the panel</h2>
-        <p class="rise" style="--i:1">The panel takes the right quarter of the Showdown page. The battle and the turn log stay on the left, so you never lose sight of them.</p>
-      </div>
-      <ol>
-        <li class="gline rise">
-          <div class="gtext">
-            <h3>Pick the Pokémon that gets hit</h3>
-            <p>The four boxes are the Pokémon you brought, each with its HP. Click one and every number below is damage to that Pokémon. Until the first turn it waits, because you have not picked your four yet.</p>
-          </div>
-          <div class="gfig">
-            <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="245" style="aspect-ratio:720/245;object-position:0 6.9%" alt="Four team boxes: Flutter Mane selected with full HP, Incineroar, Rillaboom with low HP, and Amoonguss fainted."> <svg class="pen mark" viewBox="0 0 720 245" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M20 92 C20 56 120 44 190 46 C280 46 368 52 362 92 C358 130 260 142 180 140 C100 138 24 130 28 96 C30 70 100 50 200 48"/></svg></div>
-          </div>
-        </li>
-        <li class="gline rise">
-          <div class="gtext">
-            <h3>See what the opponent can do</h3>
-            <p>Each opposing Pokémon on the field gets a card. It holds the five moves players run most, taken from Pikalytics for the format you are playing. The colour and icon are the move’s type. The small percentage is how often players run it.</p>
-          </div>
-          <div class="gfig">
-            <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="675" loading="lazy" style="aspect-ratio:720/675;object-position:0 48.3%" alt="Urshifu-Rapid-Strike’s card: Surging Strikes 100 percent, Close Combat 99 percent and Aqua Jet 88 percent, each in a box coloured by its type."></div>
-          </div>
-        </li>
-        <li class="gline rise">
-          <div class="gtext">
-            <h3>Check which moves can KO</h3>
-            <p>The big number is the damage as a share of your Pokémon’s HP, from the lowest roll to the highest. It turns red when the highest roll could knock your Pokémon out. 0% means no effect: Close Combat cannot touch a Ghost-type like Flutter Mane.</p>
-          </div>
-          <div class="gfig">
-            <div class="strip">
-              <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="165" loading="lazy" style="aspect-ratio:720/165;object-position:0 40.5%" alt="Surging Strikes at 133 to 158 percent, in red, circled."> <svg class="pen mark" viewBox="0 0 720 165" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M450 80 C470 40 650 36 682 82 C700 118 600 134 540 130 C470 126 436 104 452 78 C468 54 560 44 630 52"/></svg></div>
-              <div class="shot crop"><img src="assets/shots/panel-one.png" width="720" height="165" loading="lazy" style="aspect-ratio:720/165;object-position:0 55.1%" alt="Close Combat at 0 percent, circled."> <svg class="pen mark" viewBox="0 0 720 165" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M512 80 C520 50 600 46 622 78 C632 108 560 122 524 108 C500 98 510 66 560 54"/></svg></div>
+<header class="nav nav--centre">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#top"><span class="mark" data-mark="dots" aria-hidden="true"></span>Showdown Helper</a>
+    <nav class="nav__links" aria-label="Main">
+      <div class="nav__item"><a class="nav__link" href="#panel">Panel</a></div>
+      <div class="nav__item">
+        <a class="nav__link" href="#guide">Guide <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="nav__menu">
+          <div class="wrap grid">
+            <div class="menu-col span-3">
+              <p class="t-label">Reading the panel</p>
+              <a href="#top-moves">Top moves<span>Five per opposing Pokémon</span></a>
+              <a href="#knockouts">Knockouts<span>Red when a move can KO</span></a>
+            </div>
+            <div class="menu-col span-3">
+              <p class="t-label">Making it exact</p>
+              <a href="#stat-changes">Stat changes<span>Every stage counts</span></a>
+              <a href="#pokepaste">Your Pokepaste<span>Your natures, EVs and IVs</span></a>
             </div>
           </div>
-        </li>
-        <li class="gline rise">
-          <div class="gtext">
-            <h3>Use your real stats</h3>
-            <p>Click the extension’s icon in Chrome’s toolbar and paste a Pokepaste link. Damage then uses the natures, EVs and IVs from your paste, matched to your Pokémon by name. Remove the paste and it goes back to what Showdown reports.</p>
-          </div>
-          <div class="gfig">
-            <div class="shot shot--sm"><img src="assets/shots/popup.png" width="640" height="720" loading="lazy" alt="The extension’s toolbar popup with a Pokepaste link field and an imported team of six Pokémon."></div>
-          </div>
-        </li>
-      </ol>
-    </section>
-
-    <section class="block draw-rule" id="install" aria-labelledby="install-h">
-      <div class="block-head">
-        <h2 id="install-h" class="rise">Install it in three steps</h2>
-        <p class="rise" style="--i:1">You need Chrome (or another Chromium browser) and Node.js. It takes a few minutes.</p>
+        </div>
       </div>
-      <ol class="steps">
-        <li class="rise">
-          <span class="tickbox"><svg class="tick pen" viewBox="0 0 24 24" aria-hidden="true"><path pathLength="1" d="M3 12.5 9.5 19 21 5"/></svg></span>
-          <div><h3>Get the code</h3><p>Clone the repository, or download it as a ZIP and unzip it.</p></div>
-          <div class="entry"><span class="field-label">Repository</span><a href="https://github.com/lkz404/showdown-helper">github.com/lkz404/showdown-helper</a></div>
-        </li>
-        <li class="rise">
-          <span class="tickbox"><svg class="tick pen" viewBox="0 0 24 24" aria-hidden="true"><path pathLength="1" d="M3 12.5 9.5 19 21 5"/></svg></span>
-          <div><h3>Build it</h3><p>Open a terminal in the folder and run two commands.</p></div>
-          <div class="entry"><span class="field-label">Terminal</span><span>npm install</span><span>node build.mjs</span></div>
-        </li>
-        <li class="rise">
-          <span class="tickbox"><svg class="tick pen" viewBox="0 0 24 24" aria-hidden="true"><path pathLength="1" d="M3 12.5 9.5 19 21 5"/></svg></span>
-          <div><h3>Load it in Chrome</h3><p>Turn on Developer mode, choose Load unpacked, and pick the folder that holds <code>manifest.json</code>. Then start a battle on Showdown.</p></div>
-          <div class="entry"><span class="field-label">Address bar</span><span>chrome://extensions</span></div>
-        </li>
-      </ol>
-    </section>
-
-    <section class="block draw-rule" id="questions" aria-labelledby="questions-h">
-      <div class="block-head">
-        <h2 id="questions-h" class="rise">Questions</h2>
-        <p class="rise" style="--i:1">Each answer comes from what the extension does today.</p>
-      </div>
-      <dl class="qa">
-        <div class="rise"><dt>Which opposing Pokémon does it show?</dt><dd class="write">The ones on the field right now, one card each. In doubles that is two cards. It updates after each move’s animation finishes.</dd></div>
-        <div class="rise"><dt>Does the panel cover the battle?</dt><dd class="write">No. Showdown shrinks to the left three quarters of the page and the panel takes the right quarter. You can collapse it to a small tab.</dd></div>
-        <div class="rise"><dt>Where does the move data come from?</dt><dd class="write">Pikalytics, for the format you are playing. If it has nothing for that format, the panel uses VGC Regulation F data and says so.</dd></div>
-        <div class="rise"><dt>How is the damage worked out?</dt><dd class="write">With the engine behind Showdown’s damage calculator. It assumes the opponent has maximum Attack or Special Attack. Your Pokémon use their real stats.</dd></div>
-        <div class="rise"><dt>Does it know the opponent’s item or Tera type?</dt><dd class="write">Only once Showdown shows them. Until then it assumes none, so read each number as a rough worst case, not a promise.</dd></div>
-        <div class="rise"><dt>Which browsers work?</dt><dd class="write">Chrome and other Chromium browsers. Firefox is not supported.</dd></div>
-      </dl>
-    </section>
-
-    <section class="close" aria-labelledby="close-h">
-      <h2 id="close-h" class="rise">Load it before your next battle</h2>
-      <p>Free, and the code is on GitHub.</p>
-      <a class="btn btn--paper rise" style="--i:2" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9h13M10 4l5 5-5 5"/></svg></a>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <div>
-      <strong>Showdown Helper</strong>
-      <nav aria-label="Footer">
-        <a href="https://github.com/lkz404/showdown-helper">Extension code</a>
-        <a href="https://github.com/lkz404/showdown-landing">This page’s code</a>
-      </nav>
+      <div class="nav__item"><a class="nav__link" href="#install">Install</a></div>
+      <div class="nav__item"><a class="nav__link" href="#questions">Questions</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
     </div>
-    <p>Pokémon, its names, sprites and types are trademarks of their owners. Showdown Helper is a fan project and is not affiliated with Nintendo, Game Freak, Pokémon Showdown or Pikalytics. Type icons by duiker101.</p>
-  </footer>
-</div>
-<script src="site.js"></script>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero hero--triptych" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text grid hero__grid">
+      <div class="span-3">
+        <h1 id="hero-h">Opponent moves for Showdown VGC</h1>
+        <p class="hero__lead">A free Chrome extension that docks beside the battle and lists each opposing Pokémon’s five most used moves, with the damage each one does to yours.</p>
+      </div>
+      <div class="ly-collage span-6 start-4" role="img" aria-label="Three views of the Showdown Helper panel: Urshifu’s five most used moves against Flutter Mane, with Surging Strikes in red at 133 to 158 percent; the same card after Intimidate, marked Atk −1; and Charizard’s card in Pokémon Champions with its two Mega forms">
+        <div class="ly-collage__set is-on">
+          <div class="ly-piece is-sheet" style="left: 4%; top: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-header">
+    <span class="smh-title">Enemy top moves</span>
+    <button type="button" title="Collapse panel" aria-label="Collapse panel" aria-expanded="true">−</button>
+  </div>
+<div class="smh-target">
+    <div class="smh-target-head">
+      <div class="smh-target-label">Damage vs</div>
+      <div class="smh-stages"></div>
+    </div>
+    <div class="smh-team" style="--cols: 4;"><button type="button" class="smh-tbox smh-selected" data-key="p1: Flutter Mane" aria-pressed="true" title="Flutter Mane">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Flutter Mane" src="assets/panel/sprites/fluttermane.png">
+    <span class="smh-tname">Flutter Mane</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Incineroar" aria-pressed="false" title="Incineroar">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+    <span class="smh-tname">Incineroar</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Rillaboom" aria-pressed="false" title="Rillaboom">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Rillaboom" src="assets/panel/sprites/rillaboom.png">
+    <span class="smh-tname">Rillaboom</span>
+    <span class="smh-hpbar"><span class="smh-hp-mid" style="width:30%"></span></span>
+  </button><button type="button" class="smh-tbox smh-fainted" data-key="p1: Amoonguss" aria-pressed="false" title="Amoonguss">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Amoonguss" src="assets/panel/sprites/amoonguss.png">
+    <span class="smh-tname">Amoonguss</span>
+    <span class="smh-hpbar"><span class="smh-hp-low" style="width:0%"></span></span>
+  </button></div>
+  </div></div></div>
+          <div class="ly-piece is-sheet" style="right: 4%; bottom: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Urshifu-Rapid-Strike" src="assets/panel/sprites/urshifu-rapidstrike.png">
+      <div class="smh-name"><span>Urshifu-Rapid-Strike</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-ko" style="--c:var(--type-water)" title="Surging Strikes (Water) · 133–158% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Surging Strikes</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">133–158%</span>
+  </div><div class="smh-move smh-zero" style="--c:var(--type-fighting)" title="Close Combat (Fighting) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Close Combat</span></div>
+      <span class="smh-usage">99% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-water)" title="Aqua Jet (Water) · 46–55% · 66.8% chance to 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Aqua Jet</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">46–55%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 13–16% · possible 7HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">45% usage</span>
+    </div>
+    <span class="smh-dmg">13–16%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-fighting)" title="Detect (Fighting) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Detect</span></div>
+      <span class="smh-usage">37% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div></div>
+  </div></div></div>
+        </div>
+        <div class="ly-collage__set" aria-hidden="true">
+          <div class="ly-piece is-sheet" style="left: 4%; top: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Urshifu-Rapid-Strike" src="assets/panel/sprites/urshifu-rapidstrike.png">
+      <div class="smh-name"><span>Urshifu-Rapid-Strike</span><span class="smh-stages"><span class="smh-stage" title="Atk lowered 1 stage, included in the damage">Atk −1</span></span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-ko" style="--c:var(--type-water)" title="Surging Strikes (Water) · 133–158% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Surging Strikes</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">133–158%</span>
+  </div><div class="smh-move smh-zero" style="--c:var(--type-fighting)" title="Close Combat (Fighting) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Close Combat</span></div>
+      <span class="smh-usage">99% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-water)" title="Aqua Jet (Water) · 32–37% · 92.7% chance to 3HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Aqua Jet</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">32–37%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 8.4–11%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">45% usage</span>
+    </div>
+    <span class="smh-dmg">8.4–11%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-fighting)" title="Detect (Fighting) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Detect</span></div>
+      <span class="smh-usage">37% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div></div>
+  </div></div></div>
+          <div class="ly-piece is-sheet" style="right: 4%; bottom: 4%; width: 46%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+      <div class="smh-name"><span>Incineroar</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-zero" style="--c:var(--type-normal)" title="Fake Out (Normal) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Fake Out</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light smh-ko" style="--c:var(--type-fire)" title="Flare Blitz (Fire) · 126–149% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M352.258 395.394C358.584 372.263 346.305 324.71 346.305 324.71C346.305 324.71 337.399 363.449 323.483 377.767C311.611 389.98 297.066 398.451 276.206 400.677C293.261 392.393 304.99 375.12 304.99 355.155C304.99 327.129 281.878 304.409 253.368 304.409C224.858 304.409 201.745 327.129 201.745 355.155C201.745 362.809 203.47 370.068 206.557 376.576C188.725 362.37 185.921 339.594 185.921 339.594C185.921 339.594 166.009 422.264 220.875 461.152C275.74 500.04 383.219 466.614 383.219 466.614C383.219 466.614 229.41 574.837 115.436 457.05C17.2568 355.584 89.8111 222.003 89.8111 222.003C89.8111 222.003 86.6777 234.395 86.6777 248.78C86.6777 263.165 94.477 274.11 94.477 274.11C94.477 274.11 117.742 225.071 135.848 205.128C152.984 186.254 174.465 170.946 193.019 157.724C207.301 147.546 219.849 138.604 227.343 130.223C268.62 84.0687 243.311 0 243.311 0C243.311 0 289.841 41.02 302.831 93.9978C307.783 114.192 304.597 137.169 301.749 157.716C297.125 191.072 293.388 218.025 326.793 216.276C380.775 213.449 333.866 130.223 333.866 130.223C333.866 130.223 456.318 194.583 447.17 307.145C438.021 419.707 313.324 445.297 313.324 445.297C313.324 445.297 345.931 418.525 352.258 395.394Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Flare Blitz</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">126–149%</span>
+  </div><div class="smh-move" style="--c:var(--type-dark)" title="Knock Off (Dark) · 69–81% · guaranteed 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Knock Off</span></div>
+      <span class="smh-usage">82% usage</span>
+    </div>
+    <span class="smh-dmg">69–81%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-dark)" title="Parting Shot (Dark) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Parting Shot</span></div>
+      <span class="smh-usage">71% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 12–15% · possible 7HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">28% usage</span>
+    </div>
+    <span class="smh-dmg">12–15%</span>
+  </div></div>
+  </div></div></div>
+        </div>
+        <div class="ly-collage__set" aria-hidden="true">
+          <div class="ly-piece is-sheet" style="left: 4%; top: 4%; width: 50%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-target">
+    <div class="smh-target-head">
+      <div class="smh-target-label">Damage vs your Pokepaste stats</div>
+      <div class="smh-stages"></div>
+    </div>
+    <div class="smh-team" style="--cols: 4;"><button type="button" class="smh-tbox smh-selected" data-key="p1: Flutter Mane" aria-pressed="true" title="Flutter Mane">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Flutter Mane" src="assets/panel/sprites/fluttermane.png">
+    <span class="smh-tname">Flutter Mane</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Incineroar" aria-pressed="false" title="Incineroar">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+    <span class="smh-tname">Incineroar</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Rillaboom" aria-pressed="false" title="Rillaboom">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Rillaboom" src="assets/panel/sprites/rillaboom.png">
+    <span class="smh-tname">Rillaboom</span>
+    <span class="smh-hpbar"><span class="smh-hp-mid" style="width:30%"></span></span>
+  </button><button type="button" class="smh-tbox smh-fainted" data-key="p1: Amoonguss" aria-pressed="false" title="Amoonguss">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Amoonguss" src="assets/panel/sprites/amoonguss.png">
+    <span class="smh-tname">Amoonguss</span>
+    <span class="smh-hpbar"><span class="smh-hp-low" style="width:0%"></span></span>
+  </button></div>
+  </div></div></div>
+          <div class="ly-piece is-sheet" style="right: 4%; bottom: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Charizard" src="assets/panel/sprites/charizard.png">
+      <div class="smh-name"><span>Charizard</span></div>
+      <div class="smh-megas"><button type="button" class="smh-mega" data-key="battle-gen9championsvgc2026regmc-1|Charizard" data-forme="Charizard-Mega-X" aria-pressed="false" title="Show this Pokémon as its Mega form">Mega X</button><button type="button" class="smh-mega" data-key="battle-gen9championsvgc2026regmc-1|Charizard" data-forme="Charizard-Mega-Y" aria-pressed="false" title="Show this Pokémon as its Mega form">Mega Y</button></div>
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light" style="--c:var(--type-fire)" title="Heat Wave (Fire) · 35–42% · guaranteed 3HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M352.258 395.394C358.584 372.263 346.305 324.71 346.305 324.71C346.305 324.71 337.399 363.449 323.483 377.767C311.611 389.98 297.066 398.451 276.206 400.677C293.261 392.393 304.99 375.12 304.99 355.155C304.99 327.129 281.878 304.409 253.368 304.409C224.858 304.409 201.745 327.129 201.745 355.155C201.745 362.809 203.47 370.068 206.557 376.576C188.725 362.37 185.921 339.594 185.921 339.594C185.921 339.594 166.009 422.264 220.875 461.152C275.74 500.04 383.219 466.614 383.219 466.614C383.219 466.614 229.41 574.837 115.436 457.05C17.2568 355.584 89.8111 222.003 89.8111 222.003C89.8111 222.003 86.6777 234.395 86.6777 248.78C86.6777 263.165 94.477 274.11 94.477 274.11C94.477 274.11 117.742 225.071 135.848 205.128C152.984 186.254 174.465 170.946 193.019 157.724C207.301 147.546 219.849 138.604 227.343 130.223C268.62 84.0687 243.311 0 243.311 0C243.311 0 289.841 41.02 302.831 93.9978C307.783 114.192 304.597 137.169 301.749 157.716C297.125 191.072 293.388 218.025 326.793 216.276C380.775 213.449 333.866 130.223 333.866 130.223C333.866 130.223 456.318 194.583 447.17 307.145C438.021 419.707 313.324 445.297 313.324 445.297C313.324 445.297 345.931 418.525 352.258 395.394Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Heat Wave</span></div>
+      <span class="smh-usage">59% usage</span>
+    </div>
+    <span class="smh-dmg">35–42%</span>
+  </div><div class="smh-move smh-light smh-status" style="--c:var(--type-normal)" title="Protect (Normal) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Protect</span></div>
+      <span class="smh-usage">43% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div><div class="smh-move smh-light smh-zero" style="--c:var(--type-normal)" title="Weather Ball (Normal) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Weather Ball</span></div>
+      <span class="smh-usage">33% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-flying)" title="Hurricane (Flying) · 55–65% · guaranteed 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M178.712 477.733C253.715 477.733 317.927 436.048 344.436 376.956C344.76 376.235 238.007 404.699 241.411 394.637C242.931 390.144 308.371 366.238 356.048 338.354C383.451 322.327 396.07 288.4 396.07 288.4C396.07 288.4 349.903 310.815 326.564 316.501C279.532 327.961 238.131 326.727 238.131 325.533C238.131 322.951 306.876 309.889 402.424 251.664C447.367 224.277 459.574 177.103 459.574 177.103C459.574 177.103 410.163 206.535 380.293 216.252C309.457 239.295 244.815 246.239 244.815 243.121C244.815 236.445 301.702 220.802 362.016 191.577C393.376 176.382 420.535 156.53 452.008 134.453C503.506 98.332 511.999 34 511.999 34C511.999 34 461.207 66.7601 436.42 77.6394C334.141 122.531 243.829 146.079 178.712 151.177C80.416 158.873 0 227.456 0 316.501C0 405.547 80.0119 477.733 178.712 477.733Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Hurricane</span></div>
+      <span class="smh-usage">8.8% usage</span>
+    </div>
+    <span class="smh-dmg">55–65%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-rock)" title="Ancient Power (Rock) · 21–24% · guaranteed 5HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M395.138 244.757C395.109 244.717 395.097 244.667 395.105 244.618L427.769 54.1518C427.784 54.0641 427.861 54 427.949 54H438.287C438.367 54 438.437 54.0517 438.461 54.1277L512.051 287.131C512.074 287.203 512.049 287.283 511.989 287.33L457.73 329.693C457.649 329.756 457.532 329.74 457.471 329.657L395.138 244.757ZM-1 371.022C-1 371.101 -0.949204 371.171 -0.874109 371.196L110.975 407.767C111.029 407.785 111.089 407.776 111.136 407.744L361.145 235.144C361.187 235.115 361.215 235.07 361.222 235.02L388.032 55.1284C388.049 55.018 387.963 54.9188 387.852 54.9188H166.406C166.351 54.9188 166.3 54.943 166.265 54.9849L-0.957974 256.714C-0.98514 256.747 -1 256.788 -1 256.831V371.022ZM157.583 417.085L279.776 457.112C279.831 457.13 279.892 457.121 279.939 457.087L425.418 352.734C425.499 352.677 425.519 352.566 425.464 352.484L370.928 271.329C370.871 271.244 370.757 271.222 370.673 271.28L157.583 417.085Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Ancient Power</span></div>
+      <span class="smh-usage">7.3% usage</span>
+    </div>
+    <span class="smh-dmg">21–24%</span>
+  </div></div>
+  </div></div></div>
+        </div>
+      </div>
+      <div class="span-3 start-10 hero__cta"><a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a></div>
+    </div></div>
+  </section>
+
+  <section class="section ground-inverse" id="panel" aria-labelledby="panel-h">
+    <div class="wrap">
+      <div class="grid">
+        <h2 class="span-5" id="panel-h">The panel beside your Showdown battle</h2>
+        <p class="span-6 start-7 t-lead">Showdown moves to the left three quarters of the window and the panel takes the right quarter. Click the Pokémon that gets hit and every number changes to match. <a class="link" href="#install">How to install it</a></p>
+      </div>
+      <div class="ui app fill" role="img" aria-label="Your team from a Pokepaste beside two views of the panel against Urshifu and Incineroar: with Flutter Mane as the target, Surging Strikes is red at 133 to 158 percent; with Rillaboom at 30 percent HP, Flare Blitz is red at 108 to 129 percent" data-ui-pause-host>
+        <div class="app__pane app__pane--list">
+          <div class="ui ui-panel ui-win" data-ui="window" data-open="Open" data-work="Working" data-done="Done" inert>
+            <div class="ui-win__bar">
+              <span class="ui-win__crumb">Showdown Helper <i>/</i> <b>Your team</b></span>
+              <span class="ui-spacer"></span>
+            </div>
+            <div class="ui-win__body">
+              <nav class="ui-win__side" aria-hidden="true">
+                <span class="ui-win__nav is-on">Team<em>6</em></span>
+                <span class="ui-win__nav">Brought<em>4</em></span>
+                <span class="ui-win__nav">Fainted<em>1</em></span>
+                <span class="ui-win__label">Stats from</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Pokepaste</span>
+              </nav>
+              <div class="ui-win__main">
+                <div class="ui-win__cols" aria-hidden="true"><span>Pokémon</span><span>Spread</span><span>In battle</span><span>HP</span></div>
+                <ul class="ui-win__rows">
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/fluttermane.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Flutter Mane</span><span class="ui-win__sub">Timid, 252 SpA, 252 Spe</span><span class="ui-win__st" data-st>On the field</span><span class="ui-win__age">100%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/incineroar.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Incineroar</span><span class="ui-win__sub">Careful, 252 HP, 252 SpD</span><span class="ui-win__st" data-st>On the field</span><span class="ui-win__age">100%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/rillaboom.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Rillaboom</span><span class="ui-win__sub">Adamant, 252 HP, 252 Atk</span><span class="ui-win__st" data-st>In the back</span><span class="ui-win__age">30%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/amoonguss.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Amoonguss</span><span class="ui-win__sub">Relaxed, 252 HP, 252 Def</span><span class="ui-win__st is-done" data-st>Fainted</span><span class="ui-win__age">0%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/urshifu-rapidstrike.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Urshifu-Rapid-Strike</span><span class="ui-win__sub">Adamant, 252 Atk, 252 Spe</span><span class="ui-win__st" data-st>Not brought</span><span class="ui-win__age">100%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/charizard.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Charizard</span><span class="ui-win__sub">Timid, 252 SpA, 252 Spe</span><span class="ui-win__st" data-st>Not brought</span><span class="ui-win__age">100%</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="app__pane app__pane--open">
+          <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-header">
+    <span class="smh-title">Enemy top moves</span>
+    <button type="button" title="Collapse panel" aria-label="Collapse panel" aria-expanded="true">−</button>
+  </div>
+  <div class="smh-target">
+    <div class="smh-target-head">
+      <div class="smh-target-label">Damage vs</div>
+      <div class="smh-stages"></div>
+    </div>
+    <div class="smh-team" style="--cols: 4;"><button type="button" class="smh-tbox smh-selected" data-key="p1: Flutter Mane" aria-pressed="true" title="Flutter Mane">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Flutter Mane" src="assets/panel/sprites/fluttermane.png">
+    <span class="smh-tname">Flutter Mane</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Incineroar" aria-pressed="false" title="Incineroar">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+    <span class="smh-tname">Incineroar</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Rillaboom" aria-pressed="false" title="Rillaboom">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Rillaboom" src="assets/panel/sprites/rillaboom.png">
+    <span class="smh-tname">Rillaboom</span>
+    <span class="smh-hpbar"><span class="smh-hp-mid" style="width:30%"></span></span>
+  </button><button type="button" class="smh-tbox smh-fainted" data-key="p1: Amoonguss" aria-pressed="false" title="Amoonguss">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Amoonguss" src="assets/panel/sprites/amoonguss.png">
+    <span class="smh-tname">Amoonguss</span>
+    <span class="smh-hpbar"><span class="smh-hp-low" style="width:0%"></span></span>
+  </button></div>
+  </div>
+  <div class="smh-body"><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Urshifu-Rapid-Strike" src="assets/panel/sprites/urshifu-rapidstrike.png">
+      <div class="smh-name"><span>Urshifu-Rapid-Strike</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-ko" style="--c:var(--type-water)" title="Surging Strikes (Water) · 133–158% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Surging Strikes</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">133–158%</span>
+  </div><div class="smh-move smh-zero" style="--c:var(--type-fighting)" title="Close Combat (Fighting) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Close Combat</span></div>
+      <span class="smh-usage">99% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-water)" title="Aqua Jet (Water) · 46–55% · 66.8% chance to 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Aqua Jet</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">46–55%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 13–16% · possible 7HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">45% usage</span>
+    </div>
+    <span class="smh-dmg">13–16%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-fighting)" title="Detect (Fighting) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Detect</span></div>
+      <span class="smh-usage">37% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div></div>
+  </div><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+      <div class="smh-name"><span>Incineroar</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-zero" style="--c:var(--type-normal)" title="Fake Out (Normal) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Fake Out</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light smh-ko" style="--c:var(--type-fire)" title="Flare Blitz (Fire) · 126–149% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M352.258 395.394C358.584 372.263 346.305 324.71 346.305 324.71C346.305 324.71 337.399 363.449 323.483 377.767C311.611 389.98 297.066 398.451 276.206 400.677C293.261 392.393 304.99 375.12 304.99 355.155C304.99 327.129 281.878 304.409 253.368 304.409C224.858 304.409 201.745 327.129 201.745 355.155C201.745 362.809 203.47 370.068 206.557 376.576C188.725 362.37 185.921 339.594 185.921 339.594C185.921 339.594 166.009 422.264 220.875 461.152C275.74 500.04 383.219 466.614 383.219 466.614C383.219 466.614 229.41 574.837 115.436 457.05C17.2568 355.584 89.8111 222.003 89.8111 222.003C89.8111 222.003 86.6777 234.395 86.6777 248.78C86.6777 263.165 94.477 274.11 94.477 274.11C94.477 274.11 117.742 225.071 135.848 205.128C152.984 186.254 174.465 170.946 193.019 157.724C207.301 147.546 219.849 138.604 227.343 130.223C268.62 84.0687 243.311 0 243.311 0C243.311 0 289.841 41.02 302.831 93.9978C307.783 114.192 304.597 137.169 301.749 157.716C297.125 191.072 293.388 218.025 326.793 216.276C380.775 213.449 333.866 130.223 333.866 130.223C333.866 130.223 456.318 194.583 447.17 307.145C438.021 419.707 313.324 445.297 313.324 445.297C313.324 445.297 345.931 418.525 352.258 395.394Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Flare Blitz</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">126–149%</span>
+  </div><div class="smh-move" style="--c:var(--type-dark)" title="Knock Off (Dark) · 69–81% · guaranteed 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Knock Off</span></div>
+      <span class="smh-usage">82% usage</span>
+    </div>
+    <span class="smh-dmg">69–81%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-dark)" title="Parting Shot (Dark) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Parting Shot</span></div>
+      <span class="smh-usage">71% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 12–15% · possible 7HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">28% usage</span>
+    </div>
+    <span class="smh-dmg">12–15%</span>
+  </div></div>
+  </div></div></div>
+          <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-header">
+    <span class="smh-title">Enemy top moves</span>
+    <button type="button" title="Collapse panel" aria-label="Collapse panel" aria-expanded="true">−</button>
+  </div>
+  <div class="smh-target">
+    <div class="smh-target-head">
+      <div class="smh-target-label">Damage vs</div>
+      <div class="smh-stages"></div>
+    </div>
+    <div class="smh-team" style="--cols: 4;"><button type="button" class="smh-tbox" data-key="p1: Flutter Mane" aria-pressed="false" title="Flutter Mane">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Flutter Mane" src="assets/panel/sprites/fluttermane.png">
+    <span class="smh-tname">Flutter Mane</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Incineroar" aria-pressed="false" title="Incineroar">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+    <span class="smh-tname">Incineroar</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox smh-selected" data-key="p1: Rillaboom" aria-pressed="true" title="Rillaboom">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Rillaboom" src="assets/panel/sprites/rillaboom.png">
+    <span class="smh-tname">Rillaboom</span>
+    <span class="smh-hpbar"><span class="smh-hp-mid" style="width:30%"></span></span>
+  </button><button type="button" class="smh-tbox smh-fainted" data-key="p1: Amoonguss" aria-pressed="false" title="Amoonguss">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Amoonguss" src="assets/panel/sprites/amoonguss.png">
+    <span class="smh-tname">Amoonguss</span>
+    <span class="smh-hpbar"><span class="smh-hp-low" style="width:0%"></span></span>
+  </button></div>
+  </div>
+  <div class="smh-body"><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Urshifu-Rapid-Strike" src="assets/panel/sprites/urshifu-rapidstrike.png">
+      <div class="smh-name"><span>Urshifu-Rapid-Strike</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-ko" style="--c:var(--type-water)" title="Surging Strikes (Water) · 30–35% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Surging Strikes</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">30–35%</span>
+  </div><div class="smh-move smh-ko" style="--c:var(--type-fighting)" title="Close Combat (Fighting) · 60–71% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Close Combat</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">99% usage</span>
+    </div>
+    <span class="smh-dmg">60–71%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-water)" title="Aqua Jet (Water) · 10–12% · guaranteed 3HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Aqua Jet</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">10–12%</span>
+  </div><div class="smh-move smh-light smh-ko" style="--c:var(--type-bug)" title="U-turn (Bug) · 47–56% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">45% usage</span>
+    </div>
+    <span class="smh-dmg">47–56%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-fighting)" title="Detect (Fighting) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Detect</span></div>
+      <span class="smh-usage">37% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div></div>
+  </div><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+      <div class="smh-name"><span>Incineroar</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light" style="--c:var(--type-normal)" title="Fake Out (Normal) · 13–15% · 0.4% chance to 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Fake Out</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">13–15%</span>
+  </div><div class="smh-move smh-light smh-ko" style="--c:var(--type-fire)" title="Flare Blitz (Fire) · 108–129% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M352.258 395.394C358.584 372.263 346.305 324.71 346.305 324.71C346.305 324.71 337.399 363.449 323.483 377.767C311.611 389.98 297.066 398.451 276.206 400.677C293.261 392.393 304.99 375.12 304.99 355.155C304.99 327.129 281.878 304.409 253.368 304.409C224.858 304.409 201.745 327.129 201.745 355.155C201.745 362.809 203.47 370.068 206.557 376.576C188.725 362.37 185.921 339.594 185.921 339.594C185.921 339.594 166.009 422.264 220.875 461.152C275.74 500.04 383.219 466.614 383.219 466.614C383.219 466.614 229.41 574.837 115.436 457.05C17.2568 355.584 89.8111 222.003 89.8111 222.003C89.8111 222.003 86.6777 234.395 86.6777 248.78C86.6777 263.165 94.477 274.11 94.477 274.11C94.477 274.11 117.742 225.071 135.848 205.128C152.984 186.254 174.465 170.946 193.019 157.724C207.301 147.546 219.849 138.604 227.343 130.223C268.62 84.0687 243.311 0 243.311 0C243.311 0 289.841 41.02 302.831 93.9978C307.783 114.192 304.597 137.169 301.749 157.716C297.125 191.072 293.388 218.025 326.793 216.276C380.775 213.449 333.866 130.223 333.866 130.223C333.866 130.223 456.318 194.583 447.17 307.145C438.021 419.707 313.324 445.297 313.324 445.297C313.324 445.297 345.931 418.525 352.258 395.394Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Flare Blitz</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">108–129%</span>
+  </div><div class="smh-move smh-ko" style="--c:var(--type-dark)" title="Knock Off (Dark) · 29–35% · 93.8% chance to OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Knock Off</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">82% usage</span>
+    </div>
+    <span class="smh-dmg">29–35%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-dark)" title="Parting Shot (Dark) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Parting Shot</span></div>
+      <span class="smh-usage">71% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div><div class="smh-move smh-light smh-ko" style="--c:var(--type-bug)" title="U-turn (Bug) · 43–51% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">28% usage</span>
+    </div>
+    <span class="smh-dmg">43–51%</span>
+  </div></div>
+  </div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section g2" id="guide" aria-labelledby="guide-h">
+    <div class="wrap">
+      <div class="group">
+        <div class="section-head">
+          <h2 id="guide-h">What the extension tells you. <span class="muted">At a glance.</span></h2>
+        </div>
+        <div class="grid">
+          <article class="card card--row card--open span-6 m-nolift" id="top-moves">
+            <h3>Lists each Pokémon’s top five moves</h3>
+            <p>From Pikalytics, for your format. The small figure is how often players run each move.</p>
+            <div class="panel" data-fx="grain-gradient" data-fx-seed="21" data-fx-params='{"drift":0}'>
+              <div class="stage"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay:24px;--ay-sm:16px">
+                <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+      <div class="smh-name"><span>Incineroar</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-zero" style="--c:var(--type-normal)" title="Fake Out (Normal) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Fake Out</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light smh-ko" style="--c:var(--type-fire)" title="Flare Blitz (Fire) · 126–149% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M352.258 395.394C358.584 372.263 346.305 324.71 346.305 324.71C346.305 324.71 337.399 363.449 323.483 377.767C311.611 389.98 297.066 398.451 276.206 400.677C293.261 392.393 304.99 375.12 304.99 355.155C304.99 327.129 281.878 304.409 253.368 304.409C224.858 304.409 201.745 327.129 201.745 355.155C201.745 362.809 203.47 370.068 206.557 376.576C188.725 362.37 185.921 339.594 185.921 339.594C185.921 339.594 166.009 422.264 220.875 461.152C275.74 500.04 383.219 466.614 383.219 466.614C383.219 466.614 229.41 574.837 115.436 457.05C17.2568 355.584 89.8111 222.003 89.8111 222.003C89.8111 222.003 86.6777 234.395 86.6777 248.78C86.6777 263.165 94.477 274.11 94.477 274.11C94.477 274.11 117.742 225.071 135.848 205.128C152.984 186.254 174.465 170.946 193.019 157.724C207.301 147.546 219.849 138.604 227.343 130.223C268.62 84.0687 243.311 0 243.311 0C243.311 0 289.841 41.02 302.831 93.9978C307.783 114.192 304.597 137.169 301.749 157.716C297.125 191.072 293.388 218.025 326.793 216.276C380.775 213.449 333.866 130.223 333.866 130.223C333.866 130.223 456.318 194.583 447.17 307.145C438.021 419.707 313.324 445.297 313.324 445.297C313.324 445.297 345.931 418.525 352.258 395.394Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Flare Blitz</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">126–149%</span>
+  </div><div class="smh-move" style="--c:var(--type-dark)" title="Knock Off (Dark) · 69–81% · guaranteed 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Knock Off</span></div>
+      <span class="smh-usage">82% usage</span>
+    </div>
+    <span class="smh-dmg">69–81%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-dark)" title="Parting Shot (Dark) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M229.379 452.85C239.106 454.339 249.068 455.111 259.212 455.111C367.214 455.111 454.767 367.558 454.767 259.556C454.767 151.553 367.214 64 259.212 64C251.966 64 244.811 64.3941 237.77 65.1621C291.345 105.751 326.767 176.062 326.767 256C326.767 340.04 287.616 413.44 229.379 452.85ZM255.656 512C397.041 512 511.656 397.385 511.656 256C511.656 114.615 397.041 0 255.656 0C114.271 0 -0.34375 114.615 -0.34375 256C-0.34375 397.385 114.271 512 255.656 512Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Parting Shot</span></div>
+      <span class="smh-usage">71% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 12–15% · possible 7HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">28% usage</span>
+    </div>
+    <span class="smh-dmg">12–15%</span>
+  </div></div>
+  </div></div>
+              </div></div>
+            </div>
+          </article>
+          <article class="card card--row card--open span-6 m-nolift" id="knockouts">
+            <h3>Turns red when a move can KO your Pokémon</h3>
+            <p>Damage as a share of your Pokémon’s HP, lowest roll to highest. Red means the top roll knocks it out.</p>
+            <div class="panel" data-fx="grain-gradient" data-fx-seed="47" data-fx-params='{"drift":0}'>
+              <div class="stage"><div class="at-corner" style="--ax:32px;--ay:24px;width:360px">
+                <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Urshifu-Rapid-Strike" src="assets/panel/sprites/urshifu-rapidstrike.png">
+      <div class="smh-name"><span>Urshifu-Rapid-Strike</span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-ko" style="--c:var(--type-water)" title="Surging Strikes (Water) · 133–158% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Surging Strikes</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">133–158%</span>
+  </div><div class="smh-move smh-zero" style="--c:var(--type-fighting)" title="Close Combat (Fighting) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Close Combat</span></div>
+      <span class="smh-usage">99% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-water)" title="Aqua Jet (Water) · 46–55% · 66.8% chance to 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Aqua Jet</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">46–55%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 13–16% · possible 7HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">45% usage</span>
+    </div>
+    <span class="smh-dmg">13–16%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-fighting)" title="Detect (Fighting) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Detect</span></div>
+      <span class="smh-usage">37% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div></div>
+  </div></div>
+              </div></div>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="card card--row card--open span-6 m-nolift" id="stat-changes">
+          <h3>Counts each Pokémon’s stat changes</h3>
+          <p>Intimidate’s −1 Attack or a Swords Dance’s +2: each stage on the field goes into the numbers.</p>
+          <div class="panel" data-fx="grain-gradient" data-fx-seed="63" data-fx-params='{"drift":0}'>
+            <div class="stage"><div class="at-right" style="--ax:32px;--ay:24px;width:360px">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Urshifu-Rapid-Strike" src="assets/panel/sprites/urshifu-rapidstrike.png">
+      <div class="smh-name"><span>Urshifu-Rapid-Strike</span><span class="smh-stages"><span class="smh-stage" title="Atk lowered 1 stage, included in the damage">Atk −1</span></span></div>
+      
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light smh-ko" style="--c:var(--type-water)" title="Surging Strikes (Water) · 133–158% · guaranteed OHKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Surging Strikes</span><span class="smh-kotag">KO</span></div>
+      <span class="smh-usage">100% usage</span>
+    </div>
+    <span class="smh-dmg">133–158%</span>
+  </div><div class="smh-move smh-zero" style="--c:var(--type-fighting)" title="Close Combat (Fighting) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Close Combat</span></div>
+      <span class="smh-usage">99% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-water)" title="Aqua Jet (Water) · 32–37% · 92.7% chance to 3HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M422.172 346.515C422.172 437.897 347.813 511.977 256.086 511.977C164.359 511.977 90 437.897 90 346.515C90 257.639 247.102 13.5479 255.718 0.22781C255.915 -0.0759384 256.258 -0.0759358 256.454 0.227813C265.07 13.5479 422.172 257.639 422.172 346.515ZM228.4 458.931C144.12 440.49 158.542 347.13 158.542 347.13C158.542 347.13 181.556 403.488 237.405 421.744C293.253 439.999 360.745 413.225 360.745 413.225C360.745 413.225 312.68 477.371 228.4 458.931Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Aqua Jet</span></div>
+      <span class="smh-usage">88% usage</span>
+    </div>
+    <span class="smh-dmg">32–37%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-bug)" title="U-turn (Bug) · 8.4–11%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path clip-rule="evenodd" d="m342.198.501279c.373-.5317158 1.105-.660937 1.637-.288625l36.354 25.455546c.532.3723.661 1.1051.289 1.6368l-50.599 72.2623c24.599 7.8587 41.358 16.3357 41.358 16.3357s-40.964 70.462-110.443 70.462-118.85-65.672-118.85-65.672 17.506-11.172 43.456-20.7539l-55.5-66.1415c-.417-.4973-.352-1.2386.145-1.6558l33.997-28.52715c.498-.41723 1.239-.35238 1.656.14487l70.272 83.74688c6.017-.6806 12.147-1.061 18.333-1.061 8.891 0 17.771.6759 26.44 1.8229zm13.746 189.200721c18.541-13.242 46.597-47.804 46.597-47.804s71.664 56.79 71.664 177.206c0 120.415-123.896 192.888-123.896 192.888s-59.195-59.781-73.727-135.562c-14.531-75.781 21.496-159.927 21.496-159.927s39.324-13.559 57.866-26.801zm-199.683 0c-18.541-13.242-46.597-47.804-46.597-47.804s-71.664 56.79-71.664 177.206c0 120.415 123.896 192.888 123.896 192.888s59.195-59.781 73.727-135.562c14.531-75.781-21.496-159.927-21.496-159.927s-39.324-13.559-57.866-26.801z" fill="#fff" fill-rule="evenodd"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">U-turn</span></div>
+      <span class="smh-usage">45% usage</span>
+    </div>
+    <span class="smh-dmg">8.4–11%</span>
+  </div><div class="smh-move smh-status" style="--c:var(--type-fighting)" title="Detect (Fighting) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M88.2336 42.5656C94.4299 18.1014 116.593 0 142.983 0C162.778 0 180.195 10.1847 190.279 25.6H206.792C217.051 15.0716 231.384 8.53333 247.245 8.53333C270.499 8.53333 290.471 22.5882 299.129 42.6667H312.954C321.617 37.2585 331.853 34.1333 342.818 34.1333C366.073 34.1333 386.044 48.1882 394.702 68.2667H432.297C432.618 68.2667 432.919 68.3532 433.178 68.5041C434.895 68.347 436.634 68.2667 438.391 68.2667C469.582 68.2667 494.866 93.5514 494.866 124.742V294.086L494.867 294.4L494.866 294.714V297.153C494.866 298.186 494.838 299.215 494.782 300.239C491.384 417.717 385.749 512 255.933 512C123.974 512 17 414.577 17 294.4C17 236.391 41.9249 183.683 82.5535 144.675C82.4522 201.228 83.4074 259.694 87.8107 258.691C99.6011 256.003 90.3891 80.8395 88.2336 42.5656Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Detect</span></div>
+      <span class="smh-usage">37% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div></div>
+  </div></div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-6 m-nolift" id="pokepaste">
+          <h3>Uses your Pokémon’s Pokepaste stats</h3>
+          <p>Paste a Pokepaste link into the toolbar popup and damage uses your natures, EVs and IVs.</p>
+          <div class="panel" data-fx="grain-gradient" data-fx-seed="88" data-fx-params='{"drift":0}'>
+            <div class="stage"><div class="at-corner" style="--ax:32px;--ay:56px;width:360px">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-header">
+    <span class="smh-title">Enemy top moves</span>
+    <button type="button" title="Collapse panel" aria-label="Collapse panel" aria-expanded="true">−</button>
+  </div>
+<div class="smh-target">
+    <div class="smh-target-head">
+      <div class="smh-target-label">Damage vs your Pokepaste stats</div>
+      <div class="smh-stages"></div>
+    </div>
+    <div class="smh-team" style="--cols: 4;"><button type="button" class="smh-tbox smh-selected" data-key="p1: Flutter Mane" aria-pressed="true" title="Flutter Mane">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Flutter Mane" src="assets/panel/sprites/fluttermane.png">
+    <span class="smh-tname">Flutter Mane</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Incineroar" aria-pressed="false" title="Incineroar">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+    <span class="smh-tname">Incineroar</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Rillaboom" aria-pressed="false" title="Rillaboom">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Rillaboom" src="assets/panel/sprites/rillaboom.png">
+    <span class="smh-tname">Rillaboom</span>
+    <span class="smh-hpbar"><span class="smh-hp-mid" style="width:30%"></span></span>
+  </button><button type="button" class="smh-tbox smh-fainted" data-key="p1: Amoonguss" aria-pressed="false" title="Amoonguss">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Amoonguss" src="assets/panel/sprites/amoonguss.png">
+    <span class="smh-tname">Amoonguss</span>
+    <span class="smh-hpbar"><span class="smh-hp-low" style="width:0%"></span></span>
+  </button></div>
+  </div></div>
+            </div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section statement" id="data" data-moment="word-highlight" aria-label="Where the numbers come from">
+    <div class="wrap">
+      <p class="t-label">Where the numbers come from</p>
+      <p class="mo-wh__text">Move usage comes from Pikalytics, HP and stat stages from the battle, and damage from the engine behind Showdown’s own calculator. Where the panel cannot know something, like the opponent’s Attack, it assumes <strong>the worst case</strong>.</p>
+    </div>
+  </section>
+
+  <section class="section" id="install" aria-labelledby="install-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-6">
+          <h2 id="install-h">Install it in 3 steps</h2>
+          <p class="t-lead">It is not on the Chrome Web Store yet, so you build it from the code.</p>
+          <ol class="stack-4">
+            <li>Install Node.js and clone the repository, then run npm install and npm run build.</li>
+            <li>Open chrome://extensions, turn on Developer mode, choose Load unpacked and pick the folder.</li>
+            <li>Start or watch a battle on Pokémon Showdown. The panel docks on the right.</li>
+          </ol>
+          <p><a class="link" href="https://github.com/lkz404/showdown-helper">Open the repository</a></p>
+        </div>
+        <div class="frame frame--lit frame--split span-6 start-7" data-visual>
+          <div class="stage"><div class="at-rise fit" style="--fit-max:520px;--ax:max(24px, 50% - 260px);--ay:40px;--ay-sm:24px" data-ui-loop>
+              <div class="ui ui-panel ui-term" data-ui="terminal-run">
+                <div class="ui-term__head">
+                  <span class="ui-term__title">showdown-helper</span>
+                  <span class="ui-meta">Terminal</span>
+                  <span class="ui-spacer"></span>
+                </div>
+                <div class="ui-term__screen" data-term-screen>
+                  <div class="ui-term__track" data-term-track>
+                    <div class="ui-term__ln ui-term__cmd"><span class="ui-term__cwd">~/showdown-helper</span><span class="ui-term__sig">$</span><span class="ui-term__typed" data-term-cmd>npm run build</span></div>
+                    <div class="ui-term__ln ui-term__meter" data-term-out data-term-meter><span class="ui-term__bar" style="--p:1"><i></i></span><span class="ui-term__count" data-term-count>4 of 4 files</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/content.js</span><span class="ui-term__t">954.7kb</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/page-hook.js</span><span class="ui-term__t">7.0kb</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/popup.js</span><span class="ui-term__t">3.9kb</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/background.js</span><span class="ui-term__t">3.9kb</span></div>
+                    <div class="ui-term__ln ui-term__gap" data-term-out aria-hidden="true"></div>
+                    <div class="ui-term__ln ui-term__done" data-term-out data-term-done><span class="ui-term__ok"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 8.3 2.4 2.4 4.6-5"/></svg></span><b>Done</b><span class="ui-term__dim">in 28ms</span></div>
+                    <div class="ui-term__ln ui-term__cmd" data-term-next><span class="ui-term__cwd">~/showdown-helper</span><span class="ui-term__sig">$</span><span class="ui-term__typed"></span><i class="ui-term__caret" aria-hidden="true"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div></div>
+          <div class="stage"><div class="at-rise fit" style="--fit-max:380px;--ax:max(24px, 50% - 190px);--ay:max(340px, calc(100% - 196px));--ay-sm:336px">
+              <div class="ui ui-panel ui-toggles" data-ui="toggles" inert>
+                <div class="ui-head">
+                  <div class="ui-title">Extensions</div>
+                  <span class="ui-spacer"></span>
+                  <div class="ui-meta">chrome://extensions</div>
+                </div>
+                <ul class="ui-toggles__list">
+                  <li class="ui-tg">
+                    <span class="ui-tg__text"><span class="ui-tg__label">Developer mode</span><span class="ui-tg__sub">Shows Load unpacked</span></span>
+                    <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Developer mode"><i></i></button>
+                  </li>
+                  <li class="ui-tg">
+                    <span class="ui-tg__text"><span class="ui-tg__label">Showdown Enemy Moves Helper</span><span class="ui-tg__sub">Version 1.0.0, loaded unpacked</span></span>
+                    <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Showdown Enemy Moves Helper"><i></i></button>
+                  </li>
+                </ul>
+              </div>
+          </div></div>
+          <!-- a phone's taller frame also shows step 3: the panel docked in a battle -->
+          <div class="stage at-phone"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay-sm:calc(100% - 236px)">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-header">
+    <span class="smh-title">Enemy top moves</span>
+    <button type="button" title="Collapse panel" aria-label="Collapse panel" aria-expanded="true">−</button>
+  </div>
+<div class="smh-target">
+    <div class="smh-target-head">
+      <div class="smh-target-label">Damage vs</div>
+      <div class="smh-stages"></div>
+    </div>
+    <div class="smh-team" style="--cols: 4;"><button type="button" class="smh-tbox smh-selected" data-key="p1: Flutter Mane" aria-pressed="true" title="Flutter Mane">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Flutter Mane" src="assets/panel/sprites/fluttermane.png">
+    <span class="smh-tname">Flutter Mane</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Incineroar" aria-pressed="false" title="Incineroar">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Incineroar" src="assets/panel/sprites/incineroar.png">
+    <span class="smh-tname">Incineroar</span>
+    <span class="smh-hpbar"><span class="smh-hp-ok" style="width:100%"></span></span>
+  </button><button type="button" class="smh-tbox" data-key="p1: Rillaboom" aria-pressed="false" title="Rillaboom">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Rillaboom" src="assets/panel/sprites/rillaboom.png">
+    <span class="smh-tname">Rillaboom</span>
+    <span class="smh-hpbar"><span class="smh-hp-mid" style="width:30%"></span></span>
+  </button><button type="button" class="smh-tbox smh-fainted" data-key="p1: Amoonguss" aria-pressed="false" title="Amoonguss">
+    <img class="smh-tsprite" width="36" height="36" loading="lazy" alt="Amoonguss" src="assets/panel/sprites/amoonguss.png">
+    <span class="smh-tname">Amoonguss</span>
+    <span class="smh-hpbar"><span class="smh-hp-low" style="width:0%"></span></span>
+  </button></div>
+  </div></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="questions" aria-labelledby="questions-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-6">
+          <h2 id="questions-h">Questions</h2>
+          <p class="t-lead">Each answer is what the extension does today.</p>
+          <div class="frame frame--lit" data-visual role="img" aria-label="Charizard’s card in Pokémon Champions, with a button for each of its Mega forms">
+            <div class="stage"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay:32px;--ay-sm:24px">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><div class="smh-card">
+    <div class="smh-chead">
+      <img class="smh-sprite" width="44" height="44" loading="lazy" alt="Charizard" src="assets/panel/sprites/charizard.png">
+      <div class="smh-name"><span>Charizard</span></div>
+      <div class="smh-megas"><button type="button" class="smh-mega" data-key="battle-gen9championsvgc2026regmc-1|Charizard" data-forme="Charizard-Mega-X" aria-pressed="false" title="Show this Pokémon as its Mega form">Mega X</button><button type="button" class="smh-mega" data-key="battle-gen9championsvgc2026regmc-1|Charizard" data-forme="Charizard-Mega-Y" aria-pressed="false" title="Show this Pokémon as its Mega form">Mega Y</button></div>
+    </div>
+    <div class="smh-moves"><div class="smh-move smh-light" style="--c:var(--type-fire)" title="Heat Wave (Fire) · 35–42% · guaranteed 3HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M352.258 395.394C358.584 372.263 346.305 324.71 346.305 324.71C346.305 324.71 337.399 363.449 323.483 377.767C311.611 389.98 297.066 398.451 276.206 400.677C293.261 392.393 304.99 375.12 304.99 355.155C304.99 327.129 281.878 304.409 253.368 304.409C224.858 304.409 201.745 327.129 201.745 355.155C201.745 362.809 203.47 370.068 206.557 376.576C188.725 362.37 185.921 339.594 185.921 339.594C185.921 339.594 166.009 422.264 220.875 461.152C275.74 500.04 383.219 466.614 383.219 466.614C383.219 466.614 229.41 574.837 115.436 457.05C17.2568 355.584 89.8111 222.003 89.8111 222.003C89.8111 222.003 86.6777 234.395 86.6777 248.78C86.6777 263.165 94.477 274.11 94.477 274.11C94.477 274.11 117.742 225.071 135.848 205.128C152.984 186.254 174.465 170.946 193.019 157.724C207.301 147.546 219.849 138.604 227.343 130.223C268.62 84.0687 243.311 0 243.311 0C243.311 0 289.841 41.02 302.831 93.9978C307.783 114.192 304.597 137.169 301.749 157.716C297.125 191.072 293.388 218.025 326.793 216.276C380.775 213.449 333.866 130.223 333.866 130.223C333.866 130.223 456.318 194.583 447.17 307.145C438.021 419.707 313.324 445.297 313.324 445.297C313.324 445.297 345.931 418.525 352.258 395.394Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Heat Wave</span></div>
+      <span class="smh-usage">59% usage</span>
+    </div>
+    <span class="smh-dmg">35–42%</span>
+  </div><div class="smh-move smh-light smh-status" style="--c:var(--type-normal)" title="Protect (Normal) · —">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Protect</span></div>
+      <span class="smh-usage">43% usage</span>
+    </div>
+    <span class="smh-dmg">—</span>
+  </div><div class="smh-move smh-light smh-zero" style="--c:var(--type-normal)" title="Weather Ball (Normal) · 0%">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M481 256C481 380.264 380.264 481 256 481C131.736 481 31 380.264 31 256C31 131.736 131.736 31 256 31C380.264 31 481 131.736 481 256ZM384.571 256C384.571 327.008 327.008 384.571 256 384.571C184.992 384.571 127.429 327.008 127.429 256C127.429 184.992 184.992 127.429 256 127.429C327.008 127.429 384.571 184.992 384.571 256Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Weather Ball</span></div>
+      <span class="smh-usage">33% usage</span>
+    </div>
+    <span class="smh-dmg">0%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-flying)" title="Hurricane (Flying) · 55–65% · guaranteed 2HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M178.712 477.733C253.715 477.733 317.927 436.048 344.436 376.956C344.76 376.235 238.007 404.699 241.411 394.637C242.931 390.144 308.371 366.238 356.048 338.354C383.451 322.327 396.07 288.4 396.07 288.4C396.07 288.4 349.903 310.815 326.564 316.501C279.532 327.961 238.131 326.727 238.131 325.533C238.131 322.951 306.876 309.889 402.424 251.664C447.367 224.277 459.574 177.103 459.574 177.103C459.574 177.103 410.163 206.535 380.293 216.252C309.457 239.295 244.815 246.239 244.815 243.121C244.815 236.445 301.702 220.802 362.016 191.577C393.376 176.382 420.535 156.53 452.008 134.453C503.506 98.332 511.999 34 511.999 34C511.999 34 461.207 66.7601 436.42 77.6394C334.141 122.531 243.829 146.079 178.712 151.177C80.416 158.873 0 227.456 0 316.501C0 405.547 80.0119 477.733 178.712 477.733Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Hurricane</span></div>
+      <span class="smh-usage">8.8% usage</span>
+    </div>
+    <span class="smh-dmg">55–65%</span>
+  </div><div class="smh-move smh-light" style="--c:var(--type-rock)" title="Ancient Power (Rock) · 21–24% · guaranteed 5HKO">
+    <span class="smh-ticon"><svg viewBox="0 0 512 512" fill="none" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M395.138 244.757C395.109 244.717 395.097 244.667 395.105 244.618L427.769 54.1518C427.784 54.0641 427.861 54 427.949 54H438.287C438.367 54 438.437 54.0517 438.461 54.1277L512.051 287.131C512.074 287.203 512.049 287.283 511.989 287.33L457.73 329.693C457.649 329.756 457.532 329.74 457.471 329.657L395.138 244.757ZM-1 371.022C-1 371.101 -0.949204 371.171 -0.874109 371.196L110.975 407.767C111.029 407.785 111.089 407.776 111.136 407.744L361.145 235.144C361.187 235.115 361.215 235.07 361.222 235.02L388.032 55.1284C388.049 55.018 387.963 54.9188 387.852 54.9188H166.406C166.351 54.9188 166.3 54.943 166.265 54.9849L-0.957974 256.714C-0.98514 256.747 -1 256.788 -1 256.831V371.022ZM157.583 417.085L279.776 457.112C279.831 457.13 279.892 457.121 279.939 457.087L425.418 352.734C425.499 352.677 425.519 352.566 425.464 352.484L370.928 271.329C370.871 271.244 370.757 271.222 370.673 271.28L157.583 417.085Z" fill="white"></path></svg></span>
+    <div class="smh-mtext">
+      <div class="smh-nameline"><span class="smh-mname">Ancient Power</span></div>
+      <span class="smh-usage">7.3% usage</span>
+    </div>
+    <span class="smh-dmg">21–24%</span>
+  </div></div>
+  </div></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="faq span-6 start-7">
+          <div class="faq__item"><h3>Which opposing Pokémon does it show?</h3><p>The ones on the field now, one card each: two in doubles. It updates once each move’s animation ends.</p></div>
+          <div class="faq__item"><h3>Where does the extension get its move data?</h3><p>From Pikalytics, for the format you are playing. If it has nothing for that format, the panel uses the nearest format it has and says so.</p></div>
+          <div class="faq__item"><h3>How does the extension work out damage?</h3><p>With @smogon/calc, the engine behind Showdown’s calculator. It gives the opponent maximum Attack and no item or Tera type until Showdown shows them.</p></div>
+          <div class="faq__item"><h3>Does it work in Pokémon Champions?</h3><p>Yes. A Pokémon that can Mega Evolve gets a button for each Mega form; press one and its moves and damage follow that form.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--word">
+      <div class="section-head--split">
+        <div><h2 id="close-h">Load it before your next battle</h2><p class="t-lead">Free, and the code is on GitHub.</p></div>
+        <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
+      </div>
+      <p class="close__word" aria-hidden="true">Showdown Helper</p>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><span class="mark" data-mark="dots" aria-hidden="true"></span>Showdown Helper</a>
+          <p class="footer__lede">Opponent moves and damage, beside the battle.</p>
+        </div>
+        <div class="span-2 footer__col"><h3>Panel</h3><ul><li><a href="#panel">The whole panel</a></li><li><a href="#data">Data sources</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Guide</h3><ul><li><a href="#top-moves">Top moves</a></li><li><a href="#stat-changes">Stat changes</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Install</h3><ul><li><a href="#install">Three steps</a></li><li><a href="https://github.com/lkz404/showdown-helper">Extension code</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Questions</h3><ul><li><a href="#questions">All answers</a></li><li><a href="https://github.com/lkz404/showdown-landing">This page’s code</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Showdown Helper</span>
+        <div class="socials"></div>
+        <span class="credits">A fan project, not affiliated with Nintendo, Game Freak, Pokémon Showdown or Pikalytics. Pokémon names, sprites and types belong to their owners. Type icons by duiker101.</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<nav class="actionbar" aria-label="Quick actions">
+  <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
+</nav>
+
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
 </body>
 </html>

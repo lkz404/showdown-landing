@@ -1,0 +1,444 @@
+<!doctype html>
+<!-- page.mjs: the source of index.html. Edit here, then run: node tools/page.mjs -->
+<html lang="en" data-type="software" data-radius="sharp" data-ground="sky" data-buttons="arrow" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Showdown Helper: opponent moves and damage for Pokémon Showdown VGC</title>
+<meta name="description" content="A free Chrome extension for Pokémon Showdown. Beside the battle it lists each opposing Pokémon's five most used moves from Pikalytics and how much of your Pokémon's HP each one takes.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Showdown Helper: opponent moves and damage for Pokémon Showdown VGC">
+<meta property="og:description" content="Your opponent's five most used moves, with damage to your team, beside the battle.">
+<meta property="og:image" content="share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#ffffff">
+<!-- <link rel="canonical" href="https://[the page's domain, once there is one]/"> -->
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+/* Archivo, the brand's face, served from the page (the same files the extension ships) */
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
+  src: url("assets/fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
+  src: url("assets/fonts/archivo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+:root { --p-bg:#ffffff; --p-surface:#f3ecdb; --p-ink:#17203a; --p-muted:#4a5470; --p-accent:#0047ab; --p-accent-ink:#ffffff; --p-action:#0047ab; --p-action-ink:#ffffff; --p-inv-bg:#17203a; --p-inv-surface:#242d46; --p-inv-ink:#ffffff; --p-inv-muted:#9ea3b0; --p-inv-accent:#ffffff; --p-inv-accent-ink:#17203a; --p-inv-action:#ffffff; --p-inv-action-ink:#17203a; --font-display:"Archivo", "Segoe UI", system-ui, sans-serif; --font-text:"Archivo", "Segoe UI", system-ui, sans-serif; --font-mono:ui-monospace, "Cascadia Mono", Consolas, monospace; --display-weight:500; --display-tracking:-0.025em; --display-tracking-xl:-0.035em; --display-stretch:80%; --ly-scale:0.9; --t-h2: clamp(28px, 1.2vw + 22px, 40px); }
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/window/fragment.css">
+<link rel="stylesheet" href="assets/ui/terminal-run/fragment.css">
+<link rel="stylesheet" href="assets/ui/toggles/fragment.css">
+<!-- the extension's own panel stylesheet, scoped to .smh-sheet by tools/fragments.mjs -->
+<link rel="stylesheet" href="assets/panel/panel.css">
+<style>
+/* page CSS, inside the visuals only */
+/* the panel, shown inline: its real markup, pasted by tools/page.mjs */
+.smh-sheet.smh-sheet { position: relative; inset: auto; width: 100%; height: auto; min-height: 0; z-index: auto; border-left: 0; }
+/* the live panel splits the window's height between its cards; inline each card takes its own height */
+.smh-sheet .smh-body, .smh-sheet .smh-card { flex: none; }
+.smh-sheet .smh-moves { flex: none; height: 290px; max-height: none; }
+/* hero: the panel's pieces on a cobalt field */
+.hero--triptych .ly-collage { background: var(--p-accent); border-radius: 2px; }
+.ly-collage .ly-piece.is-sheet { background: var(--p-bg); border: 2px solid var(--p-ink); border-radius: 2px; box-shadow: none; overflow: hidden; }
+.ly-collage .ly-piece.is-sheet .smh-sheet { border: 0; }
+.hero--triptych .hero__cta .btn { height: var(--btn-h); padding-inline: var(--s-5); font-size: 15px; }
+.ly-collage .loop-pause:focus-visible { outline-color: var(--p-bg); }
+/* the piece that ends at 96% keeps its lower-right corner clear for the pause disc, as the live panel has room under its cards */
+.ly-collage .ly-piece.is-sheet[style*="bottom"] .smh-sheet { padding-bottom: 64px; }
+/* a phone: one piece a set, the card, whole inside the collage */
+@media (max-width: 639px) {
+  .ly-collage .ly-piece.is-sheet:not([style*="bottom"]) { display: none; }
+  .ly-collage .ly-piece.is-sheet[style*="bottom"] { left: 4% !important; right: 4% !important; width: auto !important; }
+  .ly-collage .smh-sheet .smh-moves { height: 200px; }
+  .ly-collage .ly-piece.is-sheet[style*="bottom"] .smh-sheet { padding-bottom: 52px; }
+}
+/* the lit ground behind the UI in the brand's cobalt and sand */
+html[data-ground="sky"] { --ground-accent: #0047ab; --ground-surface: #f3ecdb; }
+/* the app frame: your team from the paste beside the open panel */
+.app.ui { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); margin-top: var(--s-7); background: var(--u-bg); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); }
+.app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+.app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+.app > .app__pane::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--u-bg)); pointer-events: none; }
+.app > .app__pane--open { -webkit-mask-image: linear-gradient(#000 calc(100% - 96px), transparent); mask-image: linear-gradient(#000 calc(100% - 96px), transparent); }
+@media (max-width: 1023px) {
+  .app.ui.app.ui { grid-template-rows: minmax(0, 1fr); }
+  .app > .app__pane--list { display: none; }
+  .app > .app__pane--open { -webkit-mask-image: none; mask-image: none; border-top: 0 !important; }
+  .app > .app__pane--open::after { display: none; }
+  .app .app__pane--open > .smh-sheet { height: 100%; }
+  .app .app__pane--open .smh-card + .smh-card { display: none; }
+  .app .app__pane--open .smh-body, .app .app__pane--open .smh-card { flex: 1 1 0; }
+  .app .app__pane--open .smh-moves { flex: 1 1 0; height: auto; max-height: 340px; }
+}
+.app .app__pane--open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.app .app__pane--open > .smh-sheet + .smh-sheet { border-left: 2px solid var(--color-rule); }
+.app .ui-avatar:has(img) { background: var(--p-surface); overflow: hidden; }
+.app .ui-avatar img { width: 100%; height: 100%; object-fit: contain; }
+@media (min-width: 1024px) and (max-width: 1279px) { .app.ui { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); } }
+@media (max-width: 1023px) {
+  .app.ui { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .app > .app__pane--list { max-height: 252px; }
+  .app > .app__pane--list::after { display: none; }
+  .app .ui-win__side { display: none; }
+  .app .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+  .app > .app__pane + .app__pane { border-left: 0; border-top: 1px solid var(--u-line); }
+}
+@media (max-width: 639px) {
+  .app.ui { grid-template-rows: minmax(0, 1fr); }
+  .app > .app__pane--list { display: none; }
+  .app > .app__pane + .app__pane { border-top: 0; }
+  .app .app__pane--open { grid-template-columns: minmax(0, 1fr); }
+  .app .app__pane--open > .smh-sheet + .smh-sheet { display: none; }
+}
+/* feature cards: one panel height; the sheet pieces sit on the ground like the kit's fragments */
+/* the name across the .wrap, hand-set: "Showdown Helper" is 15 characters */
+.close__word { font-size: clamp(28px, calc(11.6vw - 4px), 168px); }
+#guide .panel { --p-h: 360px; }
+#guide .smh-sheet .smh-moves { height: 250px; }
+@media (min-width: 640px) and (max-width: 1023px) {
+  #guide .panel { --p-h: max(360px, calc(100svh - 480px)); }
+  #guide .stage > div { width: min(360px, calc(100% - 48px)) !important; --ax: 24px !important; }
+}
+#install .at-phone { display: none; }
+@media (max-width: 639px) { #install .at-phone { display: block; } }
+/* the split's frame and the questions' frame: 5:4, square on a phone, on the lit ground */
+#install .frame { --ratio: 500px; }
+#questions .frame { --ratio: 400px; }
+#questions .smh-sheet .smh-moves { height: 250px; }
+/* a tablet keeps both splits side by side, so each section stays one screen */
+@media (min-width: 640px) and (max-width: 1023px) {
+  #install .grid > .span-5, #questions .grid > .span-5 { grid-column: 1 / span 6; }
+  #install .grid > .frame, #questions .grid > .faq { grid-column: 7 / span 6; }
+  #questions .stage > div { width: calc(100% - 32px) !important; --ax: 16px !important; }
+  #install .frame { --ratio: 640px; }
+}
+/* a phone: two screens each; the install frame also shows step 2 under the build */
+@media (max-width: 639px) {
+  #install, #questions, footer.closing { --h: 2; }
+  #install .frame { --ratio: 860px; }
+  .hero--triptych .hero__cta { margin-bottom: var(--s-8); }
+  .ly-collage .smh-sheet .smh-moves { height: 180px !important; }
+  /* the app frame on a phone: the panel's header and its first card, filling the pane */
+  .app .app__pane--open .smh-target { display: none; }
+  #questions .frame { --ratio: 600px; }
+}
+
+@media (max-width: 639px) {
+  #guide .panel { --p-h: 150px; }
+  /* a phone shows each card's top move, whole */
+  #guide .smh-sheet .smh-moves { height: 44px; grid-template-rows: minmax(0, 1fr); }
+  #guide .smh-sheet .smh-move:nth-child(n+2) { display: none; }
+  #guide .stage > div { width: calc(100% - 32px) !important; }
+}
+.stage .smh-sheet { border: 2px solid var(--color-rule); border-radius: 2px; }
+#install .ui-term__t { width: 64px; }
+</style>
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/word-highlight/moment.js">
+</head>
+<body>
+<!-- type: software
+     deal: hero triptych, nav-centre, close-word, footer-columns, rhythm dark-band, buttons arrow, mark dots,
+     grounds paper (hero), the lit ground sand; effect grain-gradient (the guide cards' still grounds)
+     moments: word-highlight (#data, the statement)
+     palette: the brand's own (start.mjs brand): white sheet, navy ink, cobalt, sand, as in the extension -->
+
+<header class="nav nav--centre">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#top"><span class="mark" data-mark="dots" aria-hidden="true"></span>Showdown Helper</a>
+    <nav class="nav__links" aria-label="Main">
+      <div class="nav__item"><a class="nav__link" href="#panel">Panel</a></div>
+      <div class="nav__item">
+        <a class="nav__link" href="#guide">Guide <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="nav__menu">
+          <div class="wrap grid">
+            <div class="menu-col span-3">
+              <p class="t-label">Reading the panel</p>
+              <a href="#top-moves">Top moves<span>Five per opposing Pokémon</span></a>
+              <a href="#knockouts">Knockouts<span>Red when a move can KO</span></a>
+            </div>
+            <div class="menu-col span-3">
+              <p class="t-label">Making it exact</p>
+              <a href="#stat-changes">Stat changes<span>Every stage counts</span></a>
+              <a href="#pokepaste">Your Pokepaste<span>Your natures, EVs and IVs</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav__item"><a class="nav__link" href="#install">Install</a></div>
+      <div class="nav__item"><a class="nav__link" href="#questions">Questions</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero hero--triptych" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text grid hero__grid">
+      <div class="span-3">
+        <h1 id="hero-h">Opponent moves for Showdown VGC</h1>
+        <p class="hero__lead">A free Chrome extension that docks beside the battle and lists each opposing Pokémon’s five most used moves, with the damage each one does to yours.</p>
+      </div>
+      <div class="ly-collage span-6 start-4" role="img" aria-label="Three views of the Showdown Helper panel: Urshifu’s five most used moves against Flutter Mane, with Surging Strikes in red at 133 to 158 percent; the same card after Intimidate, marked Atk −1; and Charizard’s card in Pokémon Champions with its two Mega forms">
+        <div class="ly-collage__set is-on">
+          <div class="ly-piece is-sheet" style="left: 4%; top: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:main:top --></div></div>
+          <div class="ly-piece is-sheet" style="right: 4%; bottom: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:main:card0 --></div></div>
+        </div>
+        <div class="ly-collage__set" aria-hidden="true">
+          <div class="ly-piece is-sheet" style="left: 4%; top: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:boosts:card0 --></div></div>
+          <div class="ly-piece is-sheet" style="right: 4%; bottom: 4%; width: 46%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:boosts:card1 --></div></div>
+        </div>
+        <div class="ly-collage__set" aria-hidden="true">
+          <div class="ly-piece is-sheet" style="left: 4%; top: 4%; width: 50%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:paste:target --></div></div>
+          <div class="ly-piece is-sheet" style="right: 4%; bottom: 4%; width: 54%"><div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:mega:card0 --></div></div>
+        </div>
+      </div>
+      <div class="span-3 start-10 hero__cta"><a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a></div>
+    </div></div>
+  </section>
+
+  <section class="section ground-inverse" id="panel" aria-labelledby="panel-h">
+    <div class="wrap">
+      <div class="grid">
+        <h2 class="span-5" id="panel-h">The panel beside your Showdown battle</h2>
+        <p class="span-6 start-7 t-lead">Showdown moves to the left three quarters of the window and the panel takes the right quarter. Click the Pokémon that gets hit and every number changes to match. <a class="link" href="#install">How to install it</a></p>
+      </div>
+      <div class="ui app fill" role="img" aria-label="Your team from a Pokepaste beside two views of the panel against Urshifu and Incineroar: with Flutter Mane as the target, Surging Strikes is red at 133 to 158 percent; with Rillaboom at 30 percent HP, Flare Blitz is red at 108 to 129 percent" data-ui-pause-host>
+        <div class="app__pane app__pane--list">
+          <div class="ui ui-panel ui-win" data-ui="window" data-open="Open" data-work="Working" data-done="Done" inert>
+            <div class="ui-win__bar">
+              <span class="ui-win__crumb">Showdown Helper <i>/</i> <b>Your team</b></span>
+              <span class="ui-spacer"></span>
+            </div>
+            <div class="ui-win__body">
+              <nav class="ui-win__side" aria-hidden="true">
+                <span class="ui-win__nav is-on">Team<em>6</em></span>
+                <span class="ui-win__nav">Brought<em>4</em></span>
+                <span class="ui-win__nav">Fainted<em>1</em></span>
+                <span class="ui-win__label">Stats from</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Pokepaste</span>
+              </nav>
+              <div class="ui-win__main">
+                <div class="ui-win__cols" aria-hidden="true"><span>Pokémon</span><span>Spread</span><span>In battle</span><span>HP</span></div>
+                <ul class="ui-win__rows">
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/fluttermane.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Flutter Mane</span><span class="ui-win__sub">Timid, 252 SpA, 252 Spe</span><span class="ui-win__st" data-st>On the field</span><span class="ui-win__age">100%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/incineroar.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Incineroar</span><span class="ui-win__sub">Careful, 252 HP, 252 SpD</span><span class="ui-win__st" data-st>On the field</span><span class="ui-win__age">100%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/rillaboom.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Rillaboom</span><span class="ui-win__sub">Adamant, 252 HP, 252 Atk</span><span class="ui-win__st" data-st>In the back</span><span class="ui-win__age">30%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/amoonguss.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Amoonguss</span><span class="ui-win__sub">Relaxed, 252 HP, 252 Def</span><span class="ui-win__st is-done" data-st>Fainted</span><span class="ui-win__age">0%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/urshifu-rapidstrike.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Urshifu-Rapid-Strike</span><span class="ui-win__sub">Adamant, 252 Atk, 252 Spe</span><span class="ui-win__st" data-st>Not brought</span><span class="ui-win__age">100%</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar"><img src="assets/panel/sprites/charizard.png" width="32" height="32" loading="lazy" alt=""></span><span class="ui-win__who">Charizard</span><span class="ui-win__sub">Timid, 252 SpA, 252 Spe</span><span class="ui-win__st" data-st>Not brought</span><span class="ui-win__age">100%</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="app__pane app__pane--open">
+          <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:main:all --></div>
+          <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:rilla:all --></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section g2" id="guide" aria-labelledby="guide-h">
+    <div class="wrap">
+      <div class="group">
+        <div class="section-head">
+          <h2 id="guide-h">What the extension tells you. <span class="muted">At a glance.</span></h2>
+        </div>
+        <div class="grid">
+          <article class="card card--row card--open span-6 m-nolift" id="top-moves">
+            <h3>Lists each Pokémon’s top five moves</h3>
+            <p>From Pikalytics, for your format. The small figure is how often players run each move.</p>
+            <div class="panel" data-fx="grain-gradient" data-fx-seed="21" data-fx-params='{"drift":0}'>
+              <div class="stage"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay:24px;--ay-sm:16px">
+                <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:main:card1 --></div>
+              </div></div>
+            </div>
+          </article>
+          <article class="card card--row card--open span-6 m-nolift" id="knockouts">
+            <h3>Turns red when a move can KO your Pokémon</h3>
+            <p>Damage as a share of your Pokémon’s HP, lowest roll to highest. Red means the top roll knocks it out.</p>
+            <div class="panel" data-fx="grain-gradient" data-fx-seed="47" data-fx-params='{"drift":0}'>
+              <div class="stage"><div class="at-corner" style="--ax:32px;--ay:24px;width:360px">
+                <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:main:card0 --></div>
+              </div></div>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="card card--row card--open span-6 m-nolift" id="stat-changes">
+          <h3>Counts each Pokémon’s stat changes</h3>
+          <p>Intimidate’s −1 Attack or a Swords Dance’s +2: each stage on the field goes into the numbers.</p>
+          <div class="panel" data-fx="grain-gradient" data-fx-seed="63" data-fx-params='{"drift":0}'>
+            <div class="stage"><div class="at-right" style="--ax:32px;--ay:24px;width:360px">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:boosts:card0 --></div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-6 m-nolift" id="pokepaste">
+          <h3>Uses your Pokémon’s Pokepaste stats</h3>
+          <p>Paste a Pokepaste link into the toolbar popup and damage uses your natures, EVs and IVs.</p>
+          <div class="panel" data-fx="grain-gradient" data-fx-seed="88" data-fx-params='{"drift":0}'>
+            <div class="stage"><div class="at-corner" style="--ax:32px;--ay:56px;width:360px">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:paste:top --></div>
+            </div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section statement" id="data" data-moment="word-highlight" aria-label="Where the numbers come from">
+    <div class="wrap">
+      <p class="t-label">Where the numbers come from</p>
+      <p class="mo-wh__text">Move usage comes from Pikalytics, HP and stat stages from the battle, and damage from the engine behind Showdown’s own calculator. Where the panel cannot know something, like the opponent’s Attack, it assumes <strong>the worst case</strong>.</p>
+    </div>
+  </section>
+
+  <section class="section" id="install" aria-labelledby="install-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-6">
+          <h2 id="install-h">Install it in 3 steps</h2>
+          <p class="t-lead">It is not on the Chrome Web Store yet, so you build it from the code.</p>
+          <ol class="stack-4">
+            <li>Install Node.js and clone the repository, then run npm install and npm run build.</li>
+            <li>Open chrome://extensions, turn on Developer mode, choose Load unpacked and pick the folder.</li>
+            <li>Start or watch a battle on Pokémon Showdown. The panel docks on the right.</li>
+          </ol>
+          <p><a class="link" href="https://github.com/lkz404/showdown-helper">Open the repository</a></p>
+        </div>
+        <div class="frame frame--lit frame--split span-6 start-7" data-visual>
+          <div class="stage"><div class="at-rise fit" style="--fit-max:520px;--ax:max(24px, 50% - 260px);--ay:40px;--ay-sm:24px" data-ui-loop>
+              <div class="ui ui-panel ui-term" data-ui="terminal-run">
+                <div class="ui-term__head">
+                  <span class="ui-term__title">showdown-helper</span>
+                  <span class="ui-meta">Terminal</span>
+                  <span class="ui-spacer"></span>
+                </div>
+                <div class="ui-term__screen" data-term-screen>
+                  <div class="ui-term__track" data-term-track>
+                    <div class="ui-term__ln ui-term__cmd"><span class="ui-term__cwd">~/showdown-helper</span><span class="ui-term__sig">$</span><span class="ui-term__typed" data-term-cmd>npm run build</span></div>
+                    <div class="ui-term__ln ui-term__meter" data-term-out data-term-meter><span class="ui-term__bar" style="--p:1"><i></i></span><span class="ui-term__count" data-term-count>4 of 4 files</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/content.js</span><span class="ui-term__t">954.7kb</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/page-hook.js</span><span class="ui-term__t">7.0kb</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/popup.js</span><span class="ui-term__t">3.9kb</span></div>
+                    <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">dist/background.js</span><span class="ui-term__t">3.9kb</span></div>
+                    <div class="ui-term__ln ui-term__gap" data-term-out aria-hidden="true"></div>
+                    <div class="ui-term__ln ui-term__done" data-term-out data-term-done><span class="ui-term__ok"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 8.3 2.4 2.4 4.6-5"/></svg></span><b>Done</b><span class="ui-term__dim">in 28ms</span></div>
+                    <div class="ui-term__ln ui-term__cmd" data-term-next><span class="ui-term__cwd">~/showdown-helper</span><span class="ui-term__sig">$</span><span class="ui-term__typed"></span><i class="ui-term__caret" aria-hidden="true"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div></div>
+          <div class="stage"><div class="at-rise fit" style="--fit-max:380px;--ax:max(24px, 50% - 190px);--ay:max(340px, calc(100% - 196px));--ay-sm:336px">
+              <div class="ui ui-panel ui-toggles" data-ui="toggles" inert>
+                <div class="ui-head">
+                  <div class="ui-title">Extensions</div>
+                  <span class="ui-spacer"></span>
+                  <div class="ui-meta">chrome://extensions</div>
+                </div>
+                <ul class="ui-toggles__list">
+                  <li class="ui-tg">
+                    <span class="ui-tg__text"><span class="ui-tg__label">Developer mode</span><span class="ui-tg__sub">Shows Load unpacked</span></span>
+                    <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Developer mode"><i></i></button>
+                  </li>
+                  <li class="ui-tg">
+                    <span class="ui-tg__text"><span class="ui-tg__label">Showdown Enemy Moves Helper</span><span class="ui-tg__sub">Version 1.0.0, loaded unpacked</span></span>
+                    <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Showdown Enemy Moves Helper"><i></i></button>
+                  </li>
+                </ul>
+              </div>
+          </div></div>
+          <!-- a phone's taller frame also shows step 3: the panel docked in a battle -->
+          <div class="stage at-phone"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay-sm:calc(100% - 236px)">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:main:top --></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="questions" aria-labelledby="questions-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-6">
+          <h2 id="questions-h">Questions</h2>
+          <p class="t-lead">Each answer is what the extension does today.</p>
+          <div class="frame frame--lit" data-visual role="img" aria-label="Charizard’s card in Pokémon Champions, with a button for each of its Mega forms">
+            <div class="stage"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay:32px;--ay-sm:24px">
+              <div class="ui smh-sheet" data-theme="smh-sheet" inert><!-- panel:mega:card0 --></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="faq span-6 start-7">
+          <div class="faq__item"><h3>Which opposing Pokémon does it show?</h3><p>The ones on the field now, one card each: two in doubles. It updates once each move’s animation ends.</p></div>
+          <div class="faq__item"><h3>Where does the extension get its move data?</h3><p>From Pikalytics, for the format you are playing. If it has nothing for that format, the panel uses the nearest format it has and says so.</p></div>
+          <div class="faq__item"><h3>How does the extension work out damage?</h3><p>With @smogon/calc, the engine behind Showdown’s calculator. It gives the opponent maximum Attack and no item or Tera type until Showdown shows them.</p></div>
+          <div class="faq__item"><h3>Does it work in Pokémon Champions?</h3><p>Yes. A Pokémon that can Mega Evolve gets a button for each Mega form; press one and its moves and damage follow that form.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--word">
+      <div class="section-head--split">
+        <div><h2 id="close-h">Load it before your next battle</h2><p class="t-lead">Free, and the code is on GitHub.</p></div>
+        <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
+      </div>
+      <p class="close__word" aria-hidden="true">Showdown Helper</p>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><span class="mark" data-mark="dots" aria-hidden="true"></span>Showdown Helper</a>
+          <p class="footer__lede">Opponent moves and damage, beside the battle.</p>
+        </div>
+        <div class="span-2 footer__col"><h3>Panel</h3><ul><li><a href="#panel">The whole panel</a></li><li><a href="#data">Data sources</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Guide</h3><ul><li><a href="#top-moves">Top moves</a></li><li><a href="#stat-changes">Stat changes</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Install</h3><ul><li><a href="#install">Three steps</a></li><li><a href="https://github.com/lkz404/showdown-helper">Extension code</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Questions</h3><ul><li><a href="#questions">All answers</a></li><li><a href="https://github.com/lkz404/showdown-landing">This page’s code</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Showdown Helper</span>
+        <div class="socials"></div>
+        <span class="credits">A fan project, not affiliated with Nintendo, Game Freak, Pokémon Showdown or Pikalytics. Pokémon names, sprites and types belong to their owners. Type icons by duiker101.</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<nav class="actionbar" aria-label="Quick actions">
+  <a class="btn btn--primary" href="https://github.com/lkz404/showdown-helper">Get the code on GitHub</a>
+</nav>
+
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
+</body>
+</html>

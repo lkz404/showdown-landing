@@ -1,3 +1,6 @@
 .impeccable/review/
 .impeccable/questions/
 .impeccable/mocks/
+
+# taste-skill check output: Chrome profiles, screenshots, history
+.taste-skill/

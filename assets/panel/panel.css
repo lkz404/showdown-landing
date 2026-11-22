@@ -1,0 +1,418 @@
+/* Copied from the extension by tools/fragments.mjs: do not edit here. */
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: brand (Showdown Helper, showdown-helper-site/DESIGN.md) · redesign: full
+ * paper: oklch(100% 0 0) · accent: oklch(41% 0.17 262) · display: Archivo · body: Archivo
+ * nav: kept (header strip with the collapse toggle) · signature: the ruled move sheet, damage filled in cobalt · states: loading, empty, error, no data, team preview, collapsed
+ * axes: light/grotesk-heavy/chromatic-cobalt · posture: docked sheet · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S4 R4 V3 · weakest: V, the system is the site's on purpose so the panel and the site read as one product; variety comes from the ruled move sheet, not a new look */
+/* Hallmark · finish-review: subagent (fix) · 8 findings · 8 resolved (HP contrast, picker columns from team size, focus vs selection, toggle name and hit area, title vs enemy name, picker type size, notes as ruled rows, stale sheet) · gap: type reads from a swatch, not a full-colour row */
+
+/* The face, served from the extension (web_accessible_resources in manifest.json).
+   Named "Archivo" so it can never collide with a face Showdown declares. */
+/* ---------- tokens: the panel is its own theme block (data-theme set in content.js), nothing leaks onto Showdown's :root ---------- */
+[data-theme="smh-sheet"] {
+  /* the team list sheet: white paper, navy print, cobalt ink for whatever the tool fills in */
+  --color-paper: #ffffff;
+  --color-paper-2: #f3ecdb;       /* band soft sand: quiet fills, the selected target */
+  --color-paper-3: #e4d7b8;       /* band sand: shaded fields, HP track */
+  --color-ink: #17203a;           /* print navy: printed text and every rule */
+  --color-ink-2: #4a5470;         /* print navy secondary, 7:1 on white */
+  --color-rule: #17203a;
+  --color-rule-soft: color-mix(in oklab, #17203a 32%, transparent);
+  --color-accent: #0047ab;        /* cobalt ink */
+  --color-accent-deep: #00348a;
+  --color-accent-ink: #ffffff;
+  --color-focus: #0047ab;
+  --color-ko: #b3121f;            /* a max roll that can KO: 6.6:1 on white */
+  --color-hp-ok: #1f7a2c;         /* every HP colour clears 3:1 on the track */
+  --color-hp-mid: #8a6200;
+  --color-hp-low: #b3121f;
+  --color-hp-track: #c5c7ce;
+  --color-on-dark: #ffffff;
+  --color-on-light: #17203a;
+
+  /* Pokémon type colours are data, not decoration: each move's swatch reads its type at a glance */
+  --type-normal: #a8a77a; --type-fire: #ee8130; --type-water: #6390f0; --type-electric: #f7d02c;
+  --type-grass: #7ac74c; --type-ice: #96d9d6; --type-fighting: #c22e28; --type-poison: #a33ea1;
+  --type-ground: #e2bf65; --type-flying: #a98ff3; --type-psychic: #f95587; --type-bug: #a6b91a;
+  --type-rock: #b6a136; --type-ghost: #735797; --type-dragon: #6f35fc; --type-dark: #705746;
+  --type-steel: #b7b7ce; --type-fairy: #d685ad; --type-stellar: #40b5a5; --type-unknown: #68a090;
+
+  --font-body: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --text-xs: 12px; --text-sm: 13px; --text-md: 15px; --text-lg: 17px; --text-xl: 20px;
+  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px;
+  --radius: 2px;
+  --dur-micro: 120ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Showdown's page is squeezed into the left 3/4 while the panel is docked.
+   Its rooms are position:absolute with left/right:0, so making <body> the
+   positioned containing block confines them to 75vw. page-hook.js also makes
+   Showdown's layout JS measure 75% of the viewport (see setDocked there). */
+.smh-sheet {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 25vw;
+  min-width: 0;
+  height: 100vh;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: 400 var(--text-md)/1.3 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  caret-color: var(--color-accent);
+  scrollbar-color: var(--color-ink-2) var(--color-paper);
+  border-left: 2px solid var(--color-rule);
+  overflow: hidden;
+  text-align: left;
+}
+.smh-sheet *,
+.smh-sheet *::before,
+.smh-sheet *::after {
+  box-sizing: border-box;
+}
+.smh-sheet button { font-family: var(--font-body); }
+.smh-sheet ::selection { background: var(--color-accent); color: var(--color-accent-ink); }
+.smh-sheet :focus-visible { outline: 3px solid var(--color-focus); outline-offset: -3px; }
+
+/* Collapsed: a tab on the right edge, vertically centred so it doesn't
+   cover Showdown's top-right header buttons or the chat box at the bottom. */
+.smh-sheet.smh-collapsed {
+  top: 50%;
+  right: 0;
+  width: auto;
+  height: auto;
+  transform: translateY(-50%);
+  border: 2px solid var(--color-rule);
+  border-right: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.smh-sheet.smh-collapsed .smh-body,
+.smh-sheet.smh-collapsed .smh-target {
+  display: none;
+}
+.smh-sheet.smh-collapsed .smh-header { border-bottom: 0; padding: var(--space-2xs) var(--space-2xs) var(--space-2xs) var(--space-sm); }
+
+/* ---------- header strip ---------- */
+.smh-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 44px;
+  padding: var(--space-2xs) var(--space-xs) var(--space-2xs) var(--space-md);
+  border-bottom: 2px solid var(--color-rule);
+}
+.smh-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#smh-toggle {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color var(--dur-micro) ease, color var(--dur-micro) ease;
+}
+#smh-toggle:hover { background: var(--color-paper-2); }
+#smh-toggle:active { background: var(--color-paper-3); }
+#smh-toggle:focus-visible { outline-offset: 2px; }
+#smh-toggle, .smh-mega { position: relative; }
+#smh-toggle::after, .smh-mega::after { content: ""; position: absolute; inset: -6px; } /* 44px hit area */
+
+/* ---------- target picker: one ruled strip, the picked Pokémon filled in cobalt ---------- */
+.smh-target {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 2px solid var(--color-rule);
+}
+.smh-target-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-2);
+}
+/* "Damage vs" and the picked target's Def/SpD stages share one line */
+.smh-target-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); min-height: 20px; }
+
+.smh-team {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); /* content.js sets --cols from the team size: 4 across, or 3 by 2 for six */
+  gap: 1px; /* the gap shows the rule colour behind: one hairline between cells and rows */
+  background: var(--color-rule-soft);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.smh-team .smh-note { grid-column: 1 / -1; padding: var(--space-sm); text-align: left; background: var(--color-paper); }
+.smh-tbox {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 36px auto auto;
+  align-content: start;
+  justify-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-2xs);
+  margin: 0;
+  font: 600 var(--text-xs)/1.2 var(--font-body);
+  color: var(--color-ink);
+  text-align: center;
+  background: var(--color-paper);
+  border: 0;
+  container-type: inline-size; /* the name below sizes to the box, so a narrow panel never clips it */
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color var(--dur-micro) ease;
+}
+.smh-tbox:hover { background: var(--color-paper-2); }
+.smh-tbox:active { background: var(--color-paper-3); }
+.smh-tbox:focus-visible { outline: 2px solid var(--color-ink); outline-offset: -6px; }
+.smh-tbox.smh-selected {
+  color: var(--color-accent);
+  background: var(--color-paper-2);
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+.smh-tbox .smh-tsprite {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+/* Names wrap to two lines rather than truncate: Urshifu-Rapid-Strike has to stay readable */
+.smh-tname {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.4em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  /* 13px, down to 11px in a narrow box (a 1024px screen gives each box about 60px), so one long
+     word such as "Amoonguss" still fits whole instead of being clipped */
+  font-size: clamp(11px, 18cqi, var(--text-sm));
+  font-stretch: 86%; /* Archivo, a little condensed: whole names fit a quarter-screen cell */
+}
+.smh-hpbar {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  background: var(--color-hp-track);
+  border-radius: 1px;
+}
+.smh-hpbar > span { display: block; height: 100%; }
+.smh-hp-ok { background: var(--color-hp-ok); }
+.smh-hp-mid { background: var(--color-hp-mid); }
+.smh-hp-low { background: var(--color-hp-low); }
+.smh-tbox.smh-fainted { color: var(--color-ink-2); }
+.smh-tbox.smh-fainted .smh-tsprite { filter: grayscale(1); opacity: 0.5; }
+.smh-tbox.smh-fainted .smh-tname { text-decoration: line-through; }
+
+/* ---------- enemy cards share the remaining height evenly ---------- */
+.smh-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.smh-card {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-sm) var(--space-md) var(--space-sm);
+  overflow: hidden;
+}
+.smh-card + .smh-card { border-top: 2px solid var(--color-rule); }
+.smh-chead {
+  flex: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+.smh-sprite {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.smh-name {
+  min-width: 0;
+  display: grid;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+}
+.smh-name > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.smh-src { font-weight: 500; font-size: var(--text-xs); color: var(--color-ink-2); letter-spacing: 0; }
+/* Stat stages already included in the damage: Atk +1, Def −2 */
+.smh-stages { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+.smh-name .smh-stages { margin-top: var(--space-3xs); }
+.smh-stage {
+  padding: var(--space-3xs) var(--space-2xs);
+  font: 700 var(--text-xs)/1 var(--font-body);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--color-ink);
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+
+.smh-note {
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+  padding: var(--space-xs) 0;
+}
+.smh-card > .smh-note {
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule-soft);
+}
+.smh-body > .smh-note { padding: var(--space-md); }
+
+/* ---------- the move sheet: five ruled rows share the card's height ---------- */
+.smh-moves {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  max-height: 340px; /* one enemy left: rows stay row-sized instead of stretching down the panel */
+  border-top: 1px solid var(--color-rule);
+  container-type: inline-size; /* text below scales with the list's width (cqw) so it always fits */
+}
+.smh-move {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-2xs) 0 0;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-rule-soft);
+}
+.smh-move:last-child { border-bottom: 0; }
+/* the type swatch: the move's type colour, its glyph on top */
+.smh-ticon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: clamp(26px, min(9cqw, 4vh), 34px);
+  aspect-ratio: 1;
+  color: var(--color-on-light);
+  background: var(--c, var(--type-unknown));
+  border-radius: var(--radius);
+}
+/* Fighting, Poison, Ghost, Dragon and Dark swatches are dark enough for a white glyph */
+.smh-move:not(.smh-light) .smh-ticon { color: var(--color-on-dark); }
+.smh-ticon svg { width: 62%; height: 62%; display: block; }
+.smh-ticon svg path { fill: currentColor; }
+.smh-mtext { display: grid; min-width: 0; max-height: 100%; overflow: hidden; gap: 1px; }
+.smh-nameline { display: flex; align-items: center; gap: var(--space-xs); min-width: 0; }
+.smh-mname {
+  min-width: 0;
+  font-size: clamp(13px, min(4.8cqw, 2.1vh), 17px);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.smh-usage {
+  font-size: var(--text-xs);
+  color: var(--color-ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* A move whose max roll can KO: the number goes red, and a KO mark names why */
+.smh-kotag {
+  flex: none;
+  padding: var(--space-3xs) var(--space-2xs);
+  font: 800 var(--text-xs)/1 var(--font-body);
+  color: var(--color-ko);
+  border: 1px solid var(--color-ko);
+  border-radius: var(--radius);
+}
+.smh-dmg {
+  font-size: clamp(16px, min(6.4cqw, 2.7vh), 24px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.smh-move.smh-ko .smh-dmg { color: var(--color-ko); }
+.smh-move.smh-status .smh-dmg,
+.smh-move.smh-zero .smh-dmg { color: var(--color-ink-2); font-weight: 500; }
+.smh-move.smh-status .smh-mname { font-weight: 600; }
+
+/* Loading: the sheet's five rows, ruled and empty, until Pikalytics answers */
+.smh-skel .smh-ticon { background: var(--color-paper-3); }
+.smh-skel .smh-note { padding: 0; }
+
+/* ---------- Mega toggle beside an enemy's name (only for Pokémon that can Mega evolve) ---------- */
+.smh-megas { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2xs); }
+.smh-mega {
+  min-height: 28px;
+  padding: 0 var(--space-xs);
+  font: 600 var(--text-xs)/1 var(--font-body);
+  color: var(--color-accent);
+  background: var(--color-paper);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color var(--dur-micro) ease, color var(--dur-micro) ease;
+}
+.smh-mega:hover { background: var(--color-paper-2); }
+.smh-mega:active { background: var(--color-paper-3); }
+.smh-mega[aria-pressed="true"] { color: var(--color-accent-ink); background: var(--color-accent); }
+.smh-mega[aria-pressed="true"]:hover { background: var(--color-accent-deep); }
+.smh-mega:disabled { cursor: default; }
+.smh-mega:disabled[aria-pressed="true"] { color: var(--color-accent-ink); background: var(--color-ink-2); border-color: var(--color-ink-2); }
+
+/* Short screens (720p, or a six-Pokémon picker): give the height back to the move sheet */
+@media (max-height: 820px) {
+  .smh-target { padding-block: var(--space-xs); gap: var(--space-2xs); }
+  .smh-tbox { grid-template-rows: 28px auto auto; padding-block: var(--space-2xs); }
+  .smh-tbox .smh-tsprite { width: 28px; height: 28px; }
+  .smh-tname { min-height: 0; -webkit-line-clamp: 1; }
+  .smh-card { padding-block: var(--space-xs); }
+  .smh-chead { margin-bottom: var(--space-2xs); }
+  .smh-sprite { width: 32px; height: 32px; }
+  .smh-name { font-size: var(--text-lg); }
+  .smh-mname, .smh-usage { line-height: 1.1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smh-sheet *, .smh-sheet *::before, .smh-sheet *::after { transition-duration: 0.01ms !important; }
+}
+.smh-mega:disabled:not([aria-pressed="true"]) { color: var(--color-ink-2); background: var(--color-paper-2); border-color: var(--color-rule-soft); }

@@ -1,0 +1,59 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Renders the extension's real built panel (dist/content.js) for one scenario, so tools/fragments.mjs
+     can save its markup as the page's UI pieces. ?s=main|rilla|boosts|mega|paste (rilla: the player clicks Rillaboom as the target). Used only by that tool. -->
+<link rel="stylesheet" href="/ext/dist/panel.css">
+<script>
+  // Pikalytics top moves, fetched with the extension's own pikalytics.js on 2026-11-21
+  // (gen9vgc2026regf; Charizard from gen9championsvgc2026regmc).
+  const MOVES = {
+    'Urshifu-Rapid-Strike': [['Surging Strikes', 99.999], ['Close Combat', 98.9], ['Aqua Jet', 87.684], ['U-turn', 45.468], ['Detect', 37.2]],
+    'Incineroar': [['Fake Out', 99.62], ['Flare Blitz', 88.346], ['Knock Off', 81.774], ['Parting Shot', 70.722], ['U-turn', 28.112]],
+    'Charizard': [['Heat Wave', 59.483], ['Protect', 43.24], ['Weather Ball', 33.123], ['Hurricane', 8.771], ['Ancient Power', 7.267]],
+  };
+  const s = new URLSearchParams(location.search).get('s') || 'main';
+  const champions = s === 'mega';
+  const PASTE = { link: 'https://pokepast.es/example', sets: [
+    { species: 'Flutter Mane', nature: 'Timid', evs: { hp: 4, spa: 252, spe: 252 }, ivs: {} },
+    { species: 'Incineroar', nature: 'Careful', evs: { hp: 252, def: 4, spd: 252 }, ivs: {} },
+    { species: 'Rillaboom', nature: 'Adamant', evs: { hp: 252, atk: 252, spd: 4 }, ivs: {} },
+    { species: 'Amoonguss', nature: 'Relaxed', evs: { hp: 252, def: 252, spd: 4 }, ivs: {} } ] };
+  window.chrome = {
+    runtime: {
+      lastError: null,
+      sendMessage: (m, cb) => setTimeout(() => cb({ ok: true, data: { format: m.format, species: m.species, moves: (MOVES[m.species] || []).map(([move, pct]) => ({ move, pct })) } }), 0),
+    },
+    storage: {
+      local: { get: (k, cb) => cb(s === 'paste' ? { smh_paste: PASTE } : {}), set: () => Promise.resolve(), remove: () => Promise.resolve() },
+      onChanged: { addListener() {} },
+    },
+  };
+</script>
+<script src="/ext/dist/content.js"></script>
+<script>
+  const mon = (species, hp, max, stats, extra = {}) => ({ key: 'p1: ' + species, species, level: 50, stats: { hp: max, ...stats }, curHP: hp, maxhp: max, status: '', fainted: hp === 0, active: false, boosts: {}, item: '', ability: '', tera: '', ...extra });
+  const enemy = (species, extra = {}) => ({ species, level: 50, status: '', boosts: {}, ability: '', item: '', tera: '', ...extra });
+  const team = [
+    mon('Flutter Mane', 131, 131, { atk: 50, def: 70, spa: 150, spd: 110, spe: 170 }, { ability: 'protosynthesis', active: true }),
+    mon('Incineroar', 202, 202, { atk: 136, def: 110, spa: 90, spd: 156, spe: 80 }, { active: true }),
+    mon('Rillaboom', 62, 207, { atk: 192, def: 110, spa: 80, spd: 110, spe: 100 }),
+    mon('Amoonguss', 0, 236, { atk: 85, def: 100, spa: 90, spd: 110, spe: 40 }),
+  ];
+  const enemies = {
+    main: [enemy('Urshifu-Rapid-Strike'), enemy('Incineroar')],
+    paste: [enemy('Urshifu-Rapid-Strike'), enemy('Incineroar')],
+    rilla: [enemy('Urshifu-Rapid-Strike'), enemy('Incineroar')],
+    // your Incineroar's Intimidate has lowered Urshifu's Attack
+    boosts: [enemy('Urshifu-Rapid-Strike', { boosts: { atk: -1 } }), enemy('Incineroar')],
+    mega: [enemy('Charizard'), enemy('Incineroar')],
+  }[s];
+  const snap = {
+    roomid: 'battle-' + (champions ? 'gen9championsvgc2026regmc' : 'gen9vgc2026regf') + '-1',
+    format: champions ? 'gen9championsvgc2026regmc' : 'gen9vgc2026regf', gen: 9, gameType: 'doubles', weather: '', terrain: '', started: true, settled: true,
+    enemy: enemies, team,
+  };
+  window.addEventListener('load', () => {
+    window.dispatchEvent(new MessageEvent('message', { data: { source: 'smh', snapshot: snap }, source: window, origin: location.origin }));
+    if (s === 'rilla') setTimeout(() => document.querySelector('button[data-key="p1: Rillaboom"]').click(), 1000);
+  });
+</script>
